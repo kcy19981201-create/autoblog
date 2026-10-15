@@ -56,13 +56,58 @@ def esc(s):
     return s.replace("\n", "<br>")
 
 
-def page(theme, body, css=""):
+PRO_CSS = """
+body{background:#E9ECF1}
+.blob,.dots,.emoji{display:none}
+.card{border-radius:10px;box-shadow:0 2px 0 rgba(15,27,45,.06);padding-top:56px}
+.card:before{content:"";position:absolute;left:0;top:0;right:0;height:10px;background:var(--accent);border-radius:10px 10px 0 0}
+h1{font-family:'Noto Serif CJK KR',serif;font-weight:900;letter-spacing:-1px}
+.hl{background:none;border-bottom:5px solid var(--accent)}
+.tag{border-radius:4px;background:none;color:var(--accent);border:2px solid var(--accent);font-size:24px;letter-spacing:1px;padding:6px 16px}
+.page{font-family:'Noto Sans Mono CJK KR',monospace}
+.brand{font-family:'Noto Sans Mono CJK KR',monospace;letter-spacing:1px;text-align:right;right:70px;left:auto}
+.box{border-radius:6px;background:#F3F5F8;border-left:6px solid var(--accent)}
+.box .ic{display:none}
+.row{border-radius:6px;background:#F7F8FA;border-left:6px solid var(--accent)}
+.num,.ck{border-radius:4px;font-family:'Noto Sans Mono CJK KR',monospace}
+.it{border-bottom:2px solid #E6E9EE}
+th{border-radius:0 !important;background:#fff !important;color:var(--ink) !important;border-top:4px solid var(--ink);border-bottom:2px solid var(--ink)}
+td{border-radius:0 !important;background:#fff !important;border-bottom:1px solid #D9DEE5}
+.q{border-radius:4px;background:none;color:var(--accent);padding:0 0 0 20px;border-left:6px solid var(--accent)}
+.a{align-self:stretch;max-width:100%;border-radius:4px;background:#F7F8FA;margin-left:26px}
+.chip{border-radius:4px;border-width:2px;font-size:24px;font-family:'Noto Sans Mono CJK KR',monospace}
+/* cover */
+.pro-cover body{background:#0F1B2D}
+.cov{background:#0F1B2D !important;color:#fff}
+.cov h1{color:#fff}.cov .sub{color:#AEB8C6 !important}
+.cov .hl{border-bottom-color:#7FA7D9}
+.cov .tag{color:#9FC0E8;border-color:#9FC0E8}
+.cov .chip{color:#C9D6E6;border-color:#4A6283}
+.cov .chips{flex-direction:row;flex-wrap:wrap;gap:12px}.cov .bottom{margin-top:0}
+.cov .brand{color:#6F8099}
+.cov:before{background:#7FA7D9}
+.formula{font-family:'Noto Serif CJK KR',serif;font-style:italic;font-size:44px;color:#7FA7D9;
+         border-top:1px solid #33465F;padding-top:26px;margin-top:auto;margin-bottom:26px}
+"""
+
+THEMES["navy"] = ("#E9ECF1", "#1F4E8C", "#0F1B2D")
+
+
+def page(theme, body, css="", s=None):
+    s = s or {}
+    pro = s.get("style") == "pro"
+    if pro:
+        theme = theme if theme in ("navy",) else "navy"
     bg, accent, ink = THEMES.get(theme, THEMES["mint"])
+    extra = PRO_CSS if pro else ""
+    cls = "card cov" if (pro and s.get("type") == "cover") else "card"
+    if pro and s.get("type") == "cover":
+        body = body.replace('<div class="bottom">', f'<div class="formula">{s.get("formula", "")}</div><div class="bottom">')
     return f"""<html><head><meta charset="utf-8"><style>
-:root{{--bg:{bg};--accent:{accent};--ink:{ink};--hl:{accent}55}}{BASE_CSS}{css}</style></head>
+:root{{--bg:{bg};--accent:{accent};--ink:{ink};--hl:{accent}55}}{BASE_CSS}{css}{extra}</style></head>
 <body><div class="blob" style="width:420px;height:420px;top:-130px;left:-150px"></div>
 <div class="blob" style="width:320px;height:320px;bottom:-100px;right:-70px"></div>
-<div class="card"><div class="dots"></div>{body}<div class="brand">{BRAND}</div></div></body></html>"""
+<div class="{cls}"><div class="dots"></div>{body}<div class="brand">{BRAND}</div></div></body></html>"""
 
 
 def top(s, default, idx):
@@ -86,7 +131,7 @@ def cover(s, idx):
         css += "h1{font-size:62px}.chip{font-size:26px}"
     body = f"""{top(s, '재테크 사전', '')}<h1>{esc(s['title'])}</h1><div class="sub muted">{esc(s.get('subtitle', ''))}</div>
 <div class="bottom"><div class="chips">{chips}</div><div class="emoji">{s.get('emoji', '💰')}</div></div>"""
-    return page(s.get("theme"), body, css)
+    return page(s.get("theme"), body, css, s)
 
 
 def points(s, idx):
@@ -102,7 +147,7 @@ def points(s, idx):
         for i, p in enumerate(s["points"][:4]))
     body = f"""{top(s, '핵심 정리', idx)}<div class="emoji">{s.get('emoji', '✅')}</div>
 <h1>{esc(s['title'])}</h1><div class="list">{rows}</div>"""
-    return page(s.get("theme"), body, css)
+    return page(s.get("theme"), body, css, s)
 
 
 def compare(s, idx):
@@ -118,7 +163,7 @@ td:first-child{{font-weight:800;border-radius:20px 0 0 20px}}td:last-child{{bord
     rows = "".join("<tr>" + "".join(f"<td>{esc(c)}</td>" for c in r) + "</tr>" for r in s["rows"][:5])
     tip = f'<div class="box"><div class="ic">💡</div><div>{esc(s["tip"])}</div></div>' if s.get("tip") else ""
     body = f"""{top(s, '한눈에 비교', idx)}<h1>{esc(s['title'])}</h1><table><tr>{head}</tr>{rows}</table>{tip}"""
-    return page(s.get("theme"), body, css)
+    return page(s.get("theme"), body, css, s)
 
 
 def bars(s, idx):
@@ -136,7 +181,7 @@ def bars(s, idx):
     take = f'<div class="box"><div class="ic">👉</div><div>{esc(s["takeaway"])}</div></div>' if s.get("takeaway") else ""
     note = f'<div class="note">{esc(s["note"])}</div>' if s.get("note") else ""
     body = f"""{top(s, '숫자로 보기', idx)}<h1>{esc(s['title'])}</h1>{rows}{take}{note}"""
-    return page(s.get("theme"), body, css)
+    return page(s.get("theme"), body, css, s)
 
 
 def qa(s, idx):
@@ -149,7 +194,7 @@ def qa(s, idx):
     rows = "".join(f'<div style="display:flex;flex-direction:column"><div class="q">Q. {esc(i["q"])}</div>'
                    f'<div class="a">{esc(i["a"])}</div></div>' for i in s["items"][:3])
     body = f"""{top(s, '자주 묻는 질문', idx)}<h1>{esc(s['title'])}</h1><div class="list">{rows}</div>"""
-    return page(s.get("theme"), body, css)
+    return page(s.get("theme"), body, css, s)
 
 
 def check(s, idx):
@@ -162,7 +207,7 @@ def check(s, idx):
     tip = f'<div class="box"><div class="ic">💡</div><div>{esc(s["tip"])}</div></div>' if s.get("tip") else ""
     body = f"""{top(s, '체크리스트', idx)}<div class="emoji">{s.get('emoji', '📝')}</div>
 <h1>{esc(s['title'])}</h1><div class="list">{rows}</div>{tip}"""
-    return page(s.get("theme"), body, css)
+    return page(s.get("theme"), body, css, s)
 
 
 TEMPLATES = {"cover": cover, "points": points, "compare": compare, "bars": bars, "qa": qa, "check": check}
@@ -180,6 +225,8 @@ def render(spec, out_dir):
         pg = b.new_page(viewport={"width": 1080, "height": 1080})
         for c in cards:
             c.setdefault("theme", theme)
+            if spec.get("style"):
+                c.setdefault("style", spec["style"])
             idx = ""
             if c["type"] != "cover":
                 n += 1
