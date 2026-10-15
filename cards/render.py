@@ -83,7 +83,7 @@ td{border-radius:0 !important;background:#fff !important;border-bottom:1px solid
 .cov .hl{border-bottom-color:#7FA7D9}
 .cov .tag{color:#9FC0E8;border-color:#9FC0E8}
 .cov .chip{color:#C9D6E6;border-color:#4A6283}
-.cov .chips{flex-direction:row;flex-wrap:wrap;gap:12px}.cov .bottom{margin-top:0}
+.cov .chips{flex-direction:row;flex-wrap:wrap;gap:12px}.cov .formula+.bottom{margin-top:0}
 .cov .brand{color:#6F8099}
 .cov:before{background:#7FA7D9}
 .formula{font-family:'Noto Serif CJK KR',serif;font-style:italic;font-size:44px;color:#7FA7D9;
