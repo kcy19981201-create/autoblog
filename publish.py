@@ -17,6 +17,7 @@ import re
 import sys
 import pathlib
 import requests
+from styles import style_html
 
 ROOT = pathlib.Path(__file__).parent
 QUEUE = ROOT / "posts" / "queue"
@@ -75,7 +76,7 @@ def find_by_title(title: str, h: dict):
 
 def publish(post: dict, token: str):
     h = {"Authorization": f"Bearer {token}"}
-    body = {"kind": "blogger#post", "title": post["title"], "content": post["content"], "labels": post["labels"]}
+    body = {"kind": "blogger#post", "title": post["title"], "content": style_html(post["content"]), "labels": post["labels"]}
     pid = post["post_id"] or (find_by_title(post["title"], h) if post["update"] else None)
     if pid:
         r = requests.patch(f"{API}/{pid}", headers=h, json=body, timeout=120)
