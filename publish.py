@@ -42,7 +42,7 @@ def parse(path: pathlib.Path) -> dict:
     if len(re.sub(r"<[^>]+>", "", content)) < 1200:
         raise ValueError("본문이 너무 짧음")
     labels = [l.strip() for l in meta.get("labels", "").split(",") if l.strip()][:5]
-    return {"title": meta["title"], "labels": labels, "content": content}
+    return {"title": meta["title"].replace("[퀀트]", "").strip(), "labels": labels, "content": content}
 
 
 def access_token() -> str:
