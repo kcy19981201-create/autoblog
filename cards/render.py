@@ -101,7 +101,7 @@ def page(theme, body, css="", s=None):
     bg, accent, ink = THEMES.get(theme, THEMES["mint"])
     extra = PRO_CSS if pro else ""
     cls = "card cov" if (pro and s.get("type") == "cover") else "card"
-    if pro and s.get("type") == "cover":
+    if pro and s.get("type") == "cover" and s.get("formula"):
         body = body.replace('<div class="bottom">', f'<div class="formula">{s.get("formula", "")}</div><div class="bottom">')
     return f"""<html><head><meta charset="utf-8"><style>
 :root{{--bg:{bg};--accent:{accent};--ink:{ink};--hl:{accent}55}}{BASE_CSS}{css}{extra}</style></head>
