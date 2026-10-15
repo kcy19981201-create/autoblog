@@ -77,6 +77,13 @@ def cover(s, idx):
 .chip{align-self:flex-start;border:3px solid var(--accent);color:var(--accent);font-weight:800;font-size:30px;padding:8px 22px;border-radius:999px}
 .emoji{font-size:230px;line-height:1}"""
     chips = "".join(f'<div class="chip"># {esc(c)}</div>' for c in s.get("chips", [])[:3])
+    raw = s["title"].replace("**", "")
+    longest = max(len(l) for l in raw.split("\n"))
+    lines = raw.count("\n") + 1 + sum(len(l) > 9 for l in raw.split("\n"))
+    if lines >= 4 or longest > 11:
+        css += "h1{font-size:72px}.emoji{font-size:180px}"
+    if lines >= 5:
+        css += "h1{font-size:62px}.chip{font-size:26px}"
     body = f"""{top(s, '재테크 사전', '')}<h1>{esc(s['title'])}</h1><div class="sub muted">{esc(s.get('subtitle', ''))}</div>
 <div class="bottom"><div class="chips">{chips}</div><div class="emoji">{s.get('emoji', '💰')}</div></div>"""
     return page(s.get("theme"), body, css)
