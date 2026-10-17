@@ -2,9 +2,11 @@
 title: 퀀트 공부 일기 #1 - 현재가치와 할인, 할인곡선까지
 labels: 퀀트 공부 일기, 금융공학, 현재가치
 ---
+<span data-cards-built=""></span>
+<div style="text-align:center;margin:28px 0"><img src="https://raw.githubusercontent.com/kcy19981201-create/autoblog/main/images/2026-10-18-quant-diary-01-present-value-discounting/cover.png" alt="퀀트 공부 일기 #1 - 현재가치와 할인, 할인곡선까지 - QUANT DIARY #1" style="width:100%;max-width:640px;border-radius:18px" /></div>
 <p><strong>2026년 10월 18일.</strong></p>
 <p><a href="https://quantlib-diary.blogspot.com/2026/10/0.html">#0 프롤로그</a>에서 평가를 "현금흐름 정의 → 할인 → 민감도" 세 단계로 나눴다. 오늘은 두 번째 단계의 바탕인 할인이다. 결론부터 적으면, 미래의 돈을 오늘 가치로 바꾸는 건 결국 <strong>할인계수(discount factor) 하나를 곱하는 일</strong>이고, 어려운 부분은 그 할인계수를 만기마다 어떻게 정하느냐에 있다.</p>
-<!--card:idea-->
+<div style="text-align:center;margin:28px 0"><img src="https://raw.githubusercontent.com/kcy19981201-create/autoblog/main/images/2026-10-18-quant-diary-01-present-value-discounting/idea.png" alt="퀀트 공부 일기 #1 - 현재가치와 할인, 할인곡선까지 - KEY IDEA" style="width:100%;max-width:640px;border-radius:18px" /></div>
 
 <h2>직관: 3년 뒤 1억은 오늘 얼마인가</h2>
 <p>오늘 돈을 받으면 그 돈을 무위험 자산에 넣어 이자를 붙일 수 있다. 그래서 3년 뒤의 1억은 오늘의 1억보다 가치가 작다. 거꾸로 물으면 "오늘 얼마를 넣어야 3년 뒤 1억이 되는가"이고, 그 금액이 현재가치(PV)다.</p>
@@ -22,7 +24,7 @@ labels: 퀀트 공부 일기, 금융공학, 현재가치
 <p>그렇다고 숫자가 같은 건 아니다. 같은 "연 3.854%"라도 복리 방식이 다르면 다른 금리다. 연복리 3.854%와 같은 할인을 주는 연속복리 금리는 ln(1.03854) = <strong>3.7816%</strong>다. 금리를 주고받을 때 복리 방식과 일수 계산 방식(day count)을 같이 적어야 하는 이유다.</p>
 
 <h2>예시 숫자: 3년 뒤 1억의 현재가치</h2>
-<!--card:compare-->
+<div style="text-align:center;margin:28px 0"><img src="https://raw.githubusercontent.com/kcy19981201-create/autoblog/main/images/2026-10-18-quant-diary-01-present-value-discounting/compare.png" alt="퀀트 공부 일기 #1 - 현재가치와 할인, 할인곡선까지 - EXAMPLE" style="width:100%;max-width:640px;border-radius:18px" /></div>
 <table>
 <tr><th>복리 방식 (연 3.854%)</th><th>할인계수</th><th>현재가치</th></tr>
 <tr><td>연복리</td><td>0.892751</td><td>89,275,094원</td></tr>
@@ -31,7 +33,7 @@ labels: 퀀트 공부 일기, 금융공학, 현재가치
 </table>
 <p>* 금리는 2026년 10월 16일 국고채 3년물 금리. 계산은 아래 파이썬 코드 출력값.</p>
 <p>표기된 금리가 같아도 복리를 자주 할수록 실질 이자가 커지니 할인도 더 강해진다. 연복리와 연속복리 차이가 1억에 약 19만원이다. 평가 금액이 수천억 단위가 되면 이 차이는 무시할 수 없다.</p>
-<!--card:bars-->
+<div style="text-align:center;margin:28px 0"><img src="https://raw.githubusercontent.com/kcy19981201-create/autoblog/main/images/2026-10-18-quant-diary-01-present-value-discounting/bars.png" alt="퀀트 공부 일기 #1 - 현재가치와 할인, 할인곡선까지 - EXAMPLE" style="width:100%;max-width:640px;border-radius:18px" /></div>
 
 <h2>금리는 하나가 아니다: 할인곡선</h2>
 <p>현실에서는 만기마다 금리가 다르다. 10월 16일 국고채만 봐도 1년 3.694%에서 10년 4.182%까지 올라가는 우상향 모양이다. 그래서 여러 시점에 현금흐름이 생기는 상품은 시점마다 다른 할인계수를 써야 한다. 만기 t 마다 DF(t) 를 이어 붙인 것이 <strong>할인곡선</strong>이고, 이걸 금리로 표현하면 제로금리 곡선이다.</p>
@@ -77,7 +79,7 @@ print(f"곡선 할인 PV={pv_curve:,.0f}, 3년 금리 하나로 할인 PV={pv_fl
 5y DF=0.822313
 10y DF=0.663631
 곡선 할인 PV=100,404,804, 3년 금리 하나로 할인 PV=100,406,289</code></pre>
-<!--card:curve-->
+<div style="text-align:center;margin:28px 0"><img src="https://raw.githubusercontent.com/kcy19981201-create/autoblog/main/images/2026-10-18-quant-diary-01-present-value-discounting/curve.png" alt="퀀트 공부 일기 #1 - 현재가치와 할인, 할인곡선까지 - DISCOUNT CURVE" style="width:100%;max-width:640px;border-radius:18px" /></div>
 <p>두 가지가 눈에 띈다.</p>
 <ul>
 <li><strong>3년 할인계수가 손계산(0.892751)과 QuantLib(0.892658)에서 다르다.</strong> 금리는 같은데, QuantLib은 실제 날짜로 기간을 잰다. 2026년 10월 16일부터 2029년 10월 16일까지는 2028년 윤일이 끼어 1,096일이고, Actual/365 기준으로 T = 3.00274년이다. 이 T 로 계산하면 정확히 0.892658이 나온다. 일수 계산 방식 하나로 소수점 넷째 자리가 바뀐다.</li>
@@ -85,7 +87,7 @@ print(f"곡선 할인 PV={pv_curve:,.0f}, 3년 금리 하나로 할인 PV={pv_fl
 </ul>
 
 <h2>정리하면 할인에서 정해야 하는 것들</h2>
-<!--card:summary-->
+<div style="text-align:center;margin:28px 0"><img src="https://raw.githubusercontent.com/kcy19981201-create/autoblog/main/images/2026-10-18-quant-diary-01-present-value-discounting/summary.png" alt="퀀트 공부 일기 #1 - 현재가치와 할인, 할인곡선까지 - SUMMARY" style="width:100%;max-width:640px;border-radius:18px" /></div>
 <ul>
 <li><strong>어떤 곡선으로</strong>: 무위험 금리 곡선인지, 신용 스프레드를 얹은 곡선인지. 상품마다 다르다.</li>
 <li><strong>어떤 복리 방식으로</strong>: 연복리, 반기복리, 연속복리. 같은 숫자라도 다른 금리다.</li>
