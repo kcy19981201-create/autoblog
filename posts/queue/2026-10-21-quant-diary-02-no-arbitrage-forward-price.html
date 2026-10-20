@@ -2,9 +2,11 @@
 title: 퀀트 공부 일기 #2 - 무차익거래와 선도가격
 labels: 퀀트 공부 일기, 금융공학, 선도가격
 ---
+<span data-cards-built=""></span>
+<div style="text-align:center;margin:28px 0"><img src="https://raw.githubusercontent.com/kcy19981201-create/autoblog/main/images/2026-10-21-quant-diary-02-no-arbitrage-forward-price/cover.png" alt="퀀트 공부 일기 #2 - 무차익거래와 선도가격 - QUANT DIARY #2" style="width:100%;max-width:640px;border-radius:18px" /></div>
 <p><strong>2026년 10월 21일.</strong></p>
 <p><a href="https://quantlib-diary.blogspot.com/2026/10/1.html">#1</a>에서 할인계수를 만들었다. 오늘은 그 할인계수 하나로 가격이 정해지는 첫 파생상품, 선도(forward)다. 결론부터 적으면, 배당 없는 자산의 선도가격은 <strong>F = S / DF(T)</strong> 이다. 미래 주가에 대한 전망도, 변동성도, 확률도 필요 없다. 이 식을 받치는 건 "공짜 점심은 없다"는 무차익(no-arbitrage) 조건 하나다.</p>
-<!--card:idea-->
+<div style="text-align:center;margin:28px 0"><img src="https://raw.githubusercontent.com/kcy19981201-create/autoblog/main/images/2026-10-21-quant-diary-02-no-arbitrage-forward-price/idea.png" alt="퀀트 공부 일기 #2 - 무차익거래와 선도가격 - KEY IDEA" style="width:100%;max-width:640px;border-radius:18px" /></div>
 
 <h2>직관: 지금 사서 들고 있으면 된다</h2>
 <p>선도계약은 "1년 뒤에 이 주식을 K원에 사고판다"를 오늘 약속하는 계약이다. 계약 시점에는 돈이 오가지 않는다. 문제는 K를 얼마로 정해야 공정한가이다.</p>
@@ -17,7 +19,7 @@ labels: 퀀트 공부 일기, 금융공학, 선도가격
 <li>선도가격 F = 100,000 / 0.964395 = <strong>103,692원</strong></li>
 </ul>
 <p>시장에서 1년 선도가 이 값과 다르게 거래된다면 어떻게 되나. 두 경우를 표로 정리했다.</p>
-<!--card:compare-->
+<div style="text-align:center;margin:28px 0"><img src="https://raw.githubusercontent.com/kcy19981201-create/autoblog/main/images/2026-10-21-quant-diary-02-no-arbitrage-forward-price/compare.png" alt="퀀트 공부 일기 #2 - 무차익거래와 선도가격 - EXAMPLE" style="width:100%;max-width:640px;border-radius:18px" /></div>
 <table>
 <tr><th>시장 선도가격</th><th>할 일</th><th>1년 뒤 확정 이익</th></tr>
 <tr><td>104,500원 (비쌈)</td><td>100,000원 빌려 주식 매수 + 선도 매도 (cash-and-carry)</td><td>104,500 − 103,692 = 808원</td></tr>
@@ -43,7 +45,7 @@ B = S_T</code></pre>
 <p>주식을 들고 있는 동안 배당을 받으면, 선도를 판 사람은 그만큼 덜 손해 보니 선도가격이 낮아진다. 배당수익률 q 를 연속복리로 두면</p>
 <pre><code>F = S·e^(−qT) / DF(T) = S·e^((r−q)T)   (연속복리 r 일 때)</code></pre>
 <p>q 대신 외국 금리를 넣으면 통화선도(이자율 평형)이고, 보관 비용을 더하면 원자재 선도다. 모양은 다 같다. "들고 있는 비용 − 들고 있어서 얻는 수익"만큼 현물에서 벌어진다. 이걸 보유비용(cost of carry) 모형이라 부른다.</p>
-<!--card:bars-->
+<div style="text-align:center;margin:28px 0"><img src="https://raw.githubusercontent.com/kcy19981201-create/autoblog/main/images/2026-10-21-quant-diary-02-no-arbitrage-forward-price/bars.png" alt="퀀트 공부 일기 #2 - 무차익거래와 선도가격 - EXAMPLE" style="width:100%;max-width:640px;border-radius:18px" /></div>
 
 <h2>파이썬과 QuantLib으로 확인</h2>
 <pre><code>import numpy as np
@@ -104,7 +106,7 @@ K=103,000: 리버스 만기 이익=692원
 </ul>
 
 <h2>민감도 맛보기</h2>
-<!--card:summary-->
+<div style="text-align:center;margin:28px 0"><img src="https://raw.githubusercontent.com/kcy19981201-create/autoblog/main/images/2026-10-21-quant-diary-02-no-arbitrage-forward-price/summary.png" alt="퀀트 공부 일기 #2 - 무차익거래와 선도가격 - SUMMARY" style="width:100%;max-width:640px;border-radius:18px" /></div>
 <p>f = S − K·DF(T) 를 그대로 미분하면 민감도가 바로 나온다.</p>
 <ul>
 <li><strong>주가 민감도(델타)</strong>: ∂f/∂S = 1. 선도 매수 1계약은 주식 1주와 똑같이 움직인다. 주가에 대해 선형이니 감마(2차 민감도)는 0이다.</li>
