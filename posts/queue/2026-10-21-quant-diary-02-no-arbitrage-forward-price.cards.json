@@ -1,0 +1,41 @@
+{
+ "style": "pro",
+ "theme": "navy",
+ "cards": [
+  {"name": "cover", "type": "cover", "tag": "QUANT DIARY #2",
+   "title": "무차익거래와\n**선도가격**",
+   "subtitle": "전망이 아니라 복제 비용으로 정해지는 가격",
+   "chips": ["No-Arbitrage", "Replication", "Cost of Carry"]},
+  {"name": "idea", "type": "points", "tag": "KEY IDEA",
+   "title": "선도가격을 정하는 한 가지 조건",
+   "points": [
+    {"t": "F = S / DF(T)", "d": "배당 없는 자산의 선도가격"},
+    {"t": "복제", "d": "현물 보유 + 차입으로 같은 손익"},
+    {"t": "확률 불필요", "d": "손익이 선형이라 정적 복제"},
+    {"t": "기존 선도 가치", "d": "(F - K) x DF"}
+   ]},
+  {"name": "compare", "type": "compare", "tag": "EXAMPLE",
+   "title": "이론가 103,692원에서 벗어나면",
+   "headers": ["시장 선도가", "전략", "확정 이익"],
+   "rows": [
+    ["104,500원", "Cash-and-carry", "808원"],
+    ["103,000원", "Reverse carry", "692원"],
+    ["103,692원", "차익 없음", "0원"]
+   ],
+   "tip": "S=10만원 가정, 국고채 1년 3.692% (2026.10.20)"},
+  {"name": "bars", "type": "bars", "tag": "EXAMPLE",
+   "title": "만기별 선도가격 (원)",
+   "items": [
+    {"label": "1년", "value": 103692, "display": "103,692"},
+    {"label": "2년", "value": 107749, "display": "107,749"},
+    {"label": "3년", "value": 111980, "display": "111,980"},
+    {"label": "5년", "value": 121620, "display": "121,620"}
+   ],
+   "takeaway": "배당 2%를 반영하면 1년 선도는 101,639원",
+   "note": "* S=10만원·배당 없음 가정, 2026.10.20 국고채 금리를 제로금리로 간주"},
+  {"name": "summary", "type": "check", "tag": "SUMMARY",
+   "title": "선도 평가 정리",
+   "items": ["선도가격 F = S / DF(T)", "보유수익 q 가 있으면 F 하락", "기존 계약 가치 (F - K) x DF", "델타 1, 감마 0", "금리 민감도 K x T x DF"],
+   "tip": "다음 일기: 채권 가격과 듀레이션"}
+ ]
+}
