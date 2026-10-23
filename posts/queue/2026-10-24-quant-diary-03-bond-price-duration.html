@@ -2,9 +2,11 @@
 title: 퀀트 공부 일기 #3 - 채권 가격과 듀레이션
 labels: 퀀트 공부 일기, 금융공학, 듀레이션
 ---
+<span data-cards-built=""></span>
+<div style="text-align:center;margin:28px 0"><img src="https://raw.githubusercontent.com/kcy19981201-create/autoblog/main/images/2026-10-24-quant-diary-03-bond-price-duration/cover.png" alt="퀀트 공부 일기 #3 - 채권 가격과 듀레이션 - QUANT DIARY #3" style="width:100%;max-width:640px;border-radius:18px" /></div>
 <p><strong>2026년 10월 24일.</strong></p>
 <p><a href="https://quantlib-diary.blogspot.com/2026/10/2.html">#2</a>에서 선도를 끝으로 할인계수 하나로 닫히는 상품은 일단 정리했다. 오늘은 할인을 여러 번 하는 상품, 쿠폰 채권이다. 결론부터 적으면, 채권 가격은 <strong>현금흐름 각각의 현재가치 합</strong>이고, 금리가 조금 움직일 때 가격이 몇 % 움직이는지는 <strong>수정 듀레이션 한 숫자</strong>로 거의 맞힐 수 있다. 금리가 크게 움직이면 그 오차를 <strong>볼록성(convexity)</strong>이 메운다.</p>
-<!--card:idea-->
+<div style="text-align:center;margin:28px 0"><img src="https://raw.githubusercontent.com/kcy19981201-create/autoblog/main/images/2026-10-24-quant-diary-03-bond-price-duration/idea.png" alt="퀀트 공부 일기 #3 - 채권 가격과 듀레이션 - KEY IDEA" style="width:100%;max-width:640px;border-radius:18px" /></div>
 
 <h2>직관: 채권은 할인된 현금흐름 묶음이다</h2>
 <p>쿠폰 채권은 정해진 날짜에 이자를 주고 만기에 원금을 돌려주는 약속이다. 그러니 <a href="https://quantlib-diary.blogspot.com/2026/10/1.html">#1</a>의 현재가치를 현금흐름마다 한 번씩 적용해 더하면 가격이 된다. 이때 모든 현금흐름에 같은 금리 하나를 적용해 시장 가격과 맞추는 금리가 만기수익률(YTM)이다.</p>
@@ -31,7 +33,7 @@ labels: 퀀트 공부 일기, 금융공학, 듀레이션
 <p>마지막 줄이 핵심이다. 가격을 금리의 함수 P(y)로 보고 현재 금리 근처에서 <strong>테일러 전개</strong>한 것이다. 테일러 전개는 매끄러운 함수를 한 점 근처에서 다항식으로 근사하는 방법으로, f(y+Δy) ≈ f(y) + f′(y)Δy + ½f″(y)(Δy)² 이다. 1차 항의 계수를 가격으로 나눈 것이 −D_mod, 2차 항의 계수를 가격으로 나눈 것이 C 다. 그래서 수정 듀레이션은 "가격-금리 곡선의 기울기", 볼록성은 "그 곡선이 휘어진 정도"다.</p>
 <p>맥컬리 듀레이션을 미분하면 수정 듀레이션이 나오는 이유도 짧게 적어둔다. (1 + y/2)^(−2t) 를 y 로 미분하면 −t · (1 + y/2)^(−2t−1) 이 된다. 이걸 모든 현금흐름에 대해 더하고 P 로 나누면 −D_mac / (1 + y/2) 이다. 복리 주기 하나만큼 나눠주는 게 "수정"의 정체다. #1 에서 연속복리를 쓰면 미분이 깔끔해진다고 적었는데, 연속복리라면 두 듀레이션이 같아진다.</p>
 <p>실무에서 더 자주 보는 숫자는 <strong>DV01</strong>(금리 1bp, 즉 0.01%p 변화에 대한 가격 변화 금액)이다. 대략 P × D_mod × 0.0001 이다. 듀레이션은 비율이라 포지션 크기를 모르면 손익을 말할 수 없는데, DV01 은 원 단위라서 여러 채권을 그냥 더할 수 있다. <a href="https://quantlib-diary.blogspot.com/2026/10/0.html">#0 프롤로그</a>에서 말한 민감도 산출의 가장 기본 형태가 이것이다.</p>
-<!--card:compare-->
+<div style="text-align:center;margin:28px 0"><img src="https://raw.githubusercontent.com/kcy19981201-create/autoblog/main/images/2026-10-24-quant-diary-03-bond-price-duration/compare.png" alt="퀀트 공부 일기 #3 - 채권 가격과 듀레이션 - EXAMPLE" style="width:100%;max-width:640px;border-radius:18px" /></div>
 
 <h2>파이썬과 QuantLib으로 확인</h2>
 <pre><code>import numpy as np
@@ -96,7 +98,7 @@ report("3년 제로쿠폰", z, 0.03803)</code></pre>
   +100bp: 실제 -2.894%  듀레이션 -2.944%  +볼록성 -2.893%
   -100bp: 실제 +2.995%  듀레이션 +2.944%  +볼록성 +2.995%</code></pre>
 <p>* 쿠폰 3.5%·액면 10,000원·오늘 발행은 가정. 금리는 2026년 10월 23일 국고채 마감 금리를 반기복리 만기수익률로 간주. 경과이자 없음.</p>
-<!--card:bars-->
+<div style="text-align:center;margin:28px 0"><img src="https://raw.githubusercontent.com/kcy19981201-create/autoblog/main/images/2026-10-24-quant-diary-03-bond-price-duration/bars.png" alt="퀀트 공부 일기 #3 - 채권 가격과 듀레이션 - SENSITIVITY" style="width:100%;max-width:640px;border-radius:18px" /></div>
 
 <h2>출력에서 읽은 것</h2>
 <ul>
@@ -109,7 +111,7 @@ report("3년 제로쿠폰", z, 0.03803)</code></pre>
 <h2>한계: 듀레이션이 가정하는 것</h2>
 <p>여기서 쓴 듀레이션은 <strong>모든 만기 금리가 똑같이 움직인다(평행 이동)</strong>는 가정 위에 있다. 만기수익률 하나를 움직였기 때문이다. 실제로는 단기와 장기 금리가 따로 움직인다. 10월 23일만 봐도 3년물은 3.7bp, 10년물은 5.5bp 내려 하락 폭이 달랐다.</p>
 <p>그래서 리스크관리에서는 #1 에서 만든 할인곡선의 만기 구간(1년, 3년, 5년, 10년 …)을 하나씩 1bp 움직여 각각의 가격 변화를 재는 <strong>키 레이트 듀레이션(key rate duration)</strong> 또는 구간별 DV01 을 쓴다. 각 구간의 숫자를 더하면 대략 전체 DV01 이 된다. 이건 곡선 부트스트래핑을 제대로 다룰 때 다시 보려 한다. 또 하나, 듀레이션은 현금흐름이 고정이라고 가정한다. 콜옵션이 붙은 채권처럼 금리에 따라 현금흐름이 바뀌면 이 공식이 그대로 통하지 않고, 모형으로 가격을 다시 계산해서 민감도를 구해야 한다(유효 듀레이션).</p>
-<!--card:summary-->
+<div style="text-align:center;margin:28px 0"><img src="https://raw.githubusercontent.com/kcy19981201-create/autoblog/main/images/2026-10-24-quant-diary-03-bond-price-duration/summary.png" alt="퀀트 공부 일기 #3 - 채권 가격과 듀레이션 - SUMMARY" style="width:100%;max-width:640px;border-radius:18px" /></div>
 
 <h2>자주 묻는 질문</h2>
 <h3>Q. 듀레이션이 2.87년이면 2.87년 뒤에 뭔가 일어나나?</h3>
