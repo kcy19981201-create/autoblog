@@ -15,6 +15,7 @@ update: true        (선택: 이미 게시된 글을 같은 제목으로 찾아 
 import os
 import re
 import sys
+import time
 import pathlib
 import requests
 from styles import style_html
@@ -103,7 +104,9 @@ def main() -> int:
         return 0
     token = access_token()
     failed = 0
-    for f in files:
+    for i, f in enumerate(files):
+        if i:
+            time.sleep(30)  # 연속 게시 제한 회피
         try:
             pid, url, updated = publish(parse(f), token)
             record(f, pid, url)
