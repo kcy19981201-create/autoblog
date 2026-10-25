@@ -2,9 +2,11 @@
 title: 퀀트 공부 일기 #4 - 이항 트리로 옵션 가격 매기기
 labels: 퀀트 공부 일기, 금융공학, 옵션
 ---
+<span data-cards-built=""></span>
+<div style="text-align:center;margin:28px 0"><img src="https://raw.githubusercontent.com/kcy19981201-create/autoblog/main/images/2026-10-26-quant-diary-04-binomial-tree-option/cover.png" alt="퀀트 공부 일기 #4 - 이항 트리로 옵션 가격 매기기 - QUANT DIARY #4" style="width:100%;max-width:640px;border-radius:18px" /></div>
 <p><strong>2026년 10월 26일.</strong></p>
 <p><a href="https://quantlib-diary.blogspot.com/2026/10/3.html">#3</a>까지는 현금흐름이 정해진 상품만 다뤘다. 오늘부터는 손익이 꺾이는 상품, 옵션이다. 결론부터 적으면, 옵션 가격은 <strong>주식과 채권으로 옵션의 손익을 똑같이 복제하는 데 드는 돈</strong>이다. 이 복제 비용을 계산해 보면 주가가 오를 "진짜" 확률은 식에서 사라지고, 대신 <strong>위험중립 확률 q</strong>라는 계산용 확률이 남는다. 이항 트리는 이 아이디어를 가장 단순한 세계에서 보여주는 도구이고, 단계를 잘게 쪼개면 블랙숄즈 값으로 수렴한다.</p>
-<!--card:idea-->
+<div style="text-align:center;margin:28px 0"><img src="https://raw.githubusercontent.com/kcy19981201-create/autoblog/main/images/2026-10-26-quant-diary-04-binomial-tree-option/idea.png" alt="퀀트 공부 일기 #4 - 이항 트리로 옵션 가격 매기기 - KEY IDEA" style="width:100%;max-width:640px;border-radius:18px" /></div>
 
 <h2>직관: 위 아니면 아래, 두 갈래만 있는 세계</h2>
 <p>주가가 다음 시점에 딱 두 값 중 하나만 된다고 가정하자. 올라서 S·u 가 되거나, 내려서 S·d 가 된다. 이 세계에서 콜옵션의 만기 손익도 두 값뿐이다. 그러면 주식 Δ주와 현금 B원을 적당히 섞어서, 위로 가든 아래로 가든 콜옵션과 정확히 같은 돈이 되게 만들 수 있다. 미지수 두 개(Δ, B)에 방정식 두 개(위, 아래)라서 답이 하나로 정해진다.</p>
@@ -32,7 +34,7 @@ CRR(Cox-Ross-Rubinstein):  u = e^(σ√Δt),  d = 1/u</code></pre>
 <p>두 번째 줄은 "q 를 확률로 보고 만기 손익의 기댓값을 무위험이자율로 할인한 것"과 모양이 같다. 그래서 q 를 위험중립 확률이라 부른다. 진짜 확률이 아니라, 모든 자산의 기대수익률이 무위험이자율이 되도록 맞춘 가상의 확률이다. 위 예시에서 q = 0.4876 이고, 이걸로 할인한 기댓값도 434.20 으로 복제 비용과 같다. q 가 0과 1 사이에 있으려면 d &lt; e^(rΔt) &lt; u 여야 하는데, 이게 바로 무차익 조건이다. 주식이 무위험 채권보다 항상 더 벌거나 항상 덜 벌면 차익거래가 생긴다.</p>
 <p>u, d 는 아무렇게나 정하지 않는다. 한 단계에서 로그수익률 ln(S_다음/S) 은 +σ√Δt 또는 −σ√Δt 이고, 대략 반반으로 나오니 분산이 σ²Δt 가 된다. 실제 주가 모형(로그수익률의 분산이 시간에 비례해 σ²t)과 분산을 맞춘 것이다. N 단계 뒤 상승 횟수 j 는 이항분포를 따르고, 만기 주가는 S·u^j·d^(N−j) 다. 확률론의 <strong>중심극한정리</strong>(독립인 작은 변화를 많이 더하면 정규분포에 가까워진다)에 따라 N 이 커지면 로그주가가 정규분포, 즉 주가가 로그정규분포로 수렴한다. 블랙숄즈가 가정하는 바로 그 분포다.</p>
 <p>N 단계 트리는 만기 손익에서 시작해 한 단계씩 거꾸로 올라오며 위 두 번째 줄을 반복한다(<strong>역방향 귀납, backward induction</strong>). 미국형 옵션은 각 마디에서 "계속 들고 있을 때 가치"와 "지금 행사할 때 가치" 중 큰 값을 고르기만 하면 된다. 매 시점 최선의 선택을 뒤에서부터 정하는 이 방식은 수치해석에서 말하는 동적계획법이다. 해석적 공식이 없는 미국형 옵션을 트리가 쉽게 푸는 이유가 여기 있다.</p>
-<!--card:compare-->
+<div style="text-align:center;margin:28px 0"><img src="https://raw.githubusercontent.com/kcy19981201-create/autoblog/main/images/2026-10-26-quant-diary-04-binomial-tree-option/compare.png" alt="퀀트 공부 일기 #4 - 이항 트리로 옵션 가격 매기기 - CONVERGENCE" style="width:100%;max-width:640px;border-radius:18px" /></div>
 
 <h2>파이썬과 QuantLib으로 확인</h2>
 <pre><code>import numpy as np
@@ -130,7 +132,7 @@ sigma=30%: 유럽콜 N=1000 = 351.29
 sigma=55%: 유럽콜 N=1000 = 624.81
 미국콜 N=1000 = 351.29</code></pre>
 <p>* 코스피 5,550.30(2026.10.23 종가)과 기준금리 3.00%(2026.10.22)만 실제 숫자이고, 행사가·만기·변동성 30%·배당 없음은 가정. 무위험이자율은 기준금리를 연속복리로 간주.</p>
-<!--card:bars-->
+<div style="text-align:center;margin:28px 0"><img src="https://raw.githubusercontent.com/kcy19981201-create/autoblog/main/images/2026-10-26-quant-diary-04-binomial-tree-option/bars.png" alt="퀀트 공부 일기 #4 - 이항 트리로 옵션 가격 매기기 - EARLY EXERCISE" style="width:100%;max-width:640px;border-radius:18px" /></div>
 
 <h2>출력에서 읽은 것</h2>
 <ul>
@@ -144,7 +146,7 @@ sigma=55%: 유럽콜 N=1000 = 624.81
 <h2>한계: 트리가 가정하는 것</h2>
 <p>가장 큰 가정은 <strong>변동성 σ 가 상수</strong>라는 점이다. 트리 전체에서 u, d 가 똑같다. 그런데 σ 를 30%에서 55%로 바꾸면 같은 콜 가격이 351.29 에서 624.81 로 거의 두 배가 된다. 55%를 골라 본 이유가 있다. 코스피200 옵션 가격에서 역산한 변동성지수 VKOSPI 는 10월 14일 44.91, 15일에는 55선에서 마감했다. 시장이 출렁일 때는 이 숫자 하나가 가격을 좌우한다. 옵션 시장 가격에서 거꾸로 σ 를 뽑아내는 내재변동성은 블랙숄즈를 다룰 때 다시 본다.</p>
 <p>두 번째는 무위험이자율과 배당을 상수로 둔 것이다. #1 에서 만든 할인곡선을 쓰려면 단계마다 다른 금리를 넣어야 하고, 배당이 있으면 q 식의 r 자리에 (r − 배당수익률)이 들어간다. 세 번째는 계산량이다. 기초자산이 하나면 마디 수가 N²/2 정도라 가볍지만, 기초자산이 둘만 돼도 트리가 격자로 커진다. 기초자산이 많은 상품은 몬테카를로로, 경계 조건이 까다로운 상품은 유한차분법으로 넘어가게 되는데, 둘 다 로드맵에 있다.</p>
-<!--card:summary-->
+<div style="text-align:center;margin:28px 0"><img src="https://raw.githubusercontent.com/kcy19981201-create/autoblog/main/images/2026-10-26-quant-diary-04-binomial-tree-option/summary.png" alt="퀀트 공부 일기 #4 - 이항 트리로 옵션 가격 매기기 - SUMMARY" style="width:100%;max-width:640px;border-radius:18px" /></div>
 
 <h2>자주 묻는 질문</h2>
 <h3>Q. 위험중립 확률이 진짜 확률이 아니면, 오를 확률은 가격과 상관없나?</h3>
