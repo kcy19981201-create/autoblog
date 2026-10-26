@@ -2,9 +2,11 @@
 title: 퀀트 공부 일기 #5 - 위험중립 가격결정과 블랙숄즈
 labels: 퀀트 공부 일기, 금융공학, 옵션
 ---
+<span data-cards-built=""></span>
+<div style="text-align:center;margin:28px 0"><img src="https://raw.githubusercontent.com/kcy19981201-create/autoblog/main/images/2026-10-27-quant-diary-05-risk-neutral-black-scholes/cover.png" alt="퀀트 공부 일기 #5 - 위험중립 가격결정과 블랙숄즈 - QUANT DIARY #5" style="width:100%;max-width:640px;border-radius:18px" /></div>
 <p><strong>2026년 10월 27일.</strong></p>
 <p><a href="https://quantlib-diary.blogspot.com/2026/10/4.html">#4</a>에서 이항 트리를 잘게 쪼개면 블랙숄즈 값으로 수렴하는 걸 숫자로 봤다. 오늘은 그 극한을 연속시간에서 직접 다룬다. 결론부터 적으면, 블랙숄즈 가격은 <strong>주가의 기대수익률을 무위험이자율 r 로 바꿔 놓은 세계(위험중립 측도 Q)에서 만기 손익의 기댓값을 구하고, 그걸 r 로 할인한 값</strong>이다. 주가가 실제로 얼마나 오를 거라고 보든 가격은 바뀌지 않는다. 오늘은 이 문장을 수식과 몬테카를로로 각각 확인한다.</p>
-<!--card:idea-->
+<div style="text-align:center;margin:28px 0"><img src="https://raw.githubusercontent.com/kcy19981201-create/autoblog/main/images/2026-10-27-quant-diary-05-risk-neutral-black-scholes/idea.png" alt="퀀트 공부 일기 #5 - 위험중립 가격결정과 블랙숄즈 - KEY IDEA" style="width:100%;max-width:640px;border-radius:18px" /></div>
 
 <h2>직관: 트리의 q 가 연속시간에서는 측도가 된다</h2>
 <p>이항 트리에서 옵션 가격은 C = e^(−rΔt)·[q·C_u + (1−q)·C_d] 였다. q 는 진짜 확률이 아니라, 주식의 기대수익률이 무위험이자율이 되도록 맞춘 계산용 확률이었다. 단계를 무한히 잘게 쪼개면 위·아래 두 갈래가 연속적인 주가 분포가 되고, q 는 "분포 전체를 다시 매긴 확률", 즉 <strong>확률측도</strong>가 된다. 실제 세계의 확률을 P, 계산용 세계의 확률을 Q 라고 부른다.</p>
@@ -27,7 +29,7 @@ P = K·e^(−rT)·N(−d2) − S_0·N(−d1)
 
 d1 = [ ln(S_0/K) + (r + σ²/2)·T ] / (σ√T),   d2 = d1 − σ√T</code></pre>
 <p>N(·) 은 표준정규분포의 누적분포함수다. 두 항의 뜻이 깔끔하다. <strong>N(d2) 는 Q 아래에서 만기에 행사될 확률</strong>이고, K·e^(−rT)·N(d2) 는 "행사가를 낼 확률 × 행사가의 현재가치"다. N(d1) 은 콜의 <strong>델타</strong>, 즉 복제에 필요한 주식 수다. #4 의 Δ 가 연속시간에서 이렇게 생겼다.</p>
-<!--card:compare-->
+<div style="text-align:center;margin:28px 0"><img src="https://raw.githubusercontent.com/kcy19981201-create/autoblog/main/images/2026-10-27-quant-diary-05-risk-neutral-black-scholes/compare.png" alt="퀀트 공부 일기 #5 - 위험중립 가격결정과 블랙숄즈 - P VS Q" style="width:100%;max-width:640px;border-radius:18px" /></div>
 
 <h2>예시 숫자: 2026년 10월 26일 코스피로 계산</h2>
 <p><strong>2026년 10월 26일 코스피는 5,469.47에 마감</strong>했다(전 거래일 대비 1.46% 하락). 금리는 한국은행이 <strong>10월 22일 동결한 기준금리 연 3.00%</strong>를 연속복리로 간주해 쓰고, 같은 날 <strong>국고채 3년물 금리 연 3.789%</strong>로 바꿨을 때 가격이 얼마나 움직이는지도 본다. 행사가 5,470, 만기 91일, 변동성 연 30%, 배당 없음은 모두 가정이다. #4 와 마찬가지로 실제 지수옵션의 기초자산은 코스피200이니 숫자 감각을 위한 예시다.</p>
@@ -108,7 +110,7 @@ sigma=30%: 콜=345.85
 sigma=40%: 콜=453.89
 콜 400 의 내재변동성=0.3501</code></pre>
 <p>* 코스피 5,469.47(2026.10.26 종가), 기준금리 3.00%(2026.10.22), 국고채 3년 3.789%(2026.10.26)만 실제 숫자이고, 행사가·만기·변동성·배당 없음·μ=10%는 가정. 무위험이자율은 연속복리로 간주.</p>
-<!--card:bars-->
+<div style="text-align:center;margin:28px 0"><img src="https://raw.githubusercontent.com/kcy19981201-create/autoblog/main/images/2026-10-27-quant-diary-05-risk-neutral-black-scholes/bars.png" alt="퀀트 공부 일기 #5 - 위험중립 가격결정과 블랙숄즈 - SENSITIVITY" style="width:100%;max-width:640px;border-radius:18px" /></div>
 
 <h2>출력에서 읽은 것</h2>
 <ul>
@@ -123,7 +125,7 @@ sigma=40%: 콜=453.89
 <h2>한계: 블랙숄즈가 가정하는 것과 내재변동성</h2>
 <p>공식이 깔끔한 대가로 가정이 많다. 변동성과 금리가 상수이고, 주가가 끊김 없이 움직이며(점프 없음), 거래비용 없이 연속적으로 복제 포트폴리오를 조정할 수 있다고 본다. 10월 26일처럼 코스피가 하루에 1.46%, 코스닥이 3.26% 빠지는 날에는 연속 조정이라는 가정이 특히 현실과 멀어진다.</p>
 <p>실무에서는 공식을 거꾸로 쓰는 일이 많다. 시장 옵션 가격을 넣고 그 가격이 나오게 하는 σ 를 찾는 것이 <strong>내재변동성</strong>이다. 위 예시에서 같은 콜이 시장에서 400 에 거래된다면 내재변동성은 35.01% 다. σ 에 대한 가격 함수가 단조증가라서 해가 하나로 정해지고, QuantLib 은 이를 수치적인 근 찾기(브렌트 방법 같은 1차원 방정식 풀이)로 구한다. 행사가와 만기마다 내재변동성이 다르게 나오는 현상(스마일, 기간구조)은 블랙숄즈의 "σ 상수" 가정이 맞지 않는다는 시장의 신호이고, 이를 다루는 국소변동성·확률변동성 모형은 로드맵 뒤쪽 이야기다.</p>
-<!--card:summary-->
+<div style="text-align:center;margin:28px 0"><img src="https://raw.githubusercontent.com/kcy19981201-create/autoblog/main/images/2026-10-27-quant-diary-05-risk-neutral-black-scholes/summary.png" alt="퀀트 공부 일기 #5 - 위험중립 가격결정과 블랙숄즈 - SUMMARY" style="width:100%;max-width:640px;border-radius:18px" /></div>
 
 <h2>자주 묻는 질문</h2>
 <h3>Q. 기대수익률 μ 가 공식에 없는데, 주가 전망은 옵션 가격과 무관한가?</h3>
