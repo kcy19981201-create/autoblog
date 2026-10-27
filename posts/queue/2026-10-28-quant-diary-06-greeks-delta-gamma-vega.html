@@ -2,9 +2,11 @@
 title: 퀀트 공부 일기 #6 - 그릭스: 델타, 감마, 베가
 labels: 퀀트 공부 일기, 금융공학, 옵션
 ---
+<span data-cards-built=""></span>
+<div style="text-align:center;margin:28px 0"><img src="https://raw.githubusercontent.com/kcy19981201-create/autoblog/main/images/2026-10-28-quant-diary-06-greeks-delta-gamma-vega/cover.png" alt="퀀트 공부 일기 #6 - 그릭스: 델타, 감마, 베가 - QUANT DIARY #6" style="width:100%;max-width:640px;border-radius:18px" /></div>
 <p><strong>2026년 10월 28일.</strong></p>
 <p><a href="https://quantlib-diary.blogspot.com/2026/10/5_01857029615.html">#5</a>의 마지막 출력에서 금리와 변동성을 바꿔 가며 콜 가격이 얼마나 움직이는지 봤다. 그 기울기를 정식으로 이름 붙인 게 <strong>그릭스(Greeks)</strong>다. 한 줄로 적으면, 그릭스는 <strong>옵션 가격 함수 V(S, σ, r, t)를 각 입력으로 편미분한 값</strong>이고, 리스크관리는 결국 "입력이 조금 움직일 때 가격이 얼마나 움직이는가"를 이 숫자들로 미리 계산해 두는 일이다. 오늘은 델타·감마·베가를 중심으로, 세타와 로까지 공식·QuantLib·범프 앤 리밸류 세 가지 방법으로 같은 값이 나오는지 확인한다.</p>
-<!--card:idea-->
+<div style="text-align:center;margin:28px 0"><img src="https://raw.githubusercontent.com/kcy19981201-create/autoblog/main/images/2026-10-28-quant-diary-06-greeks-delta-gamma-vega/idea.png" alt="퀀트 공부 일기 #6 - 그릭스: 델타, 감마, 베가 - KEY IDEA" style="width:100%;max-width:640px;border-radius:18px" /></div>
 
 <h2>직관: 가격 함수의 기울기와 휘어짐</h2>
 <p>옵션 가격을 주가 S 의 함수로 그리면 아래로 볼록한 곡선이 된다. 만기 손익 max(S−K, 0) 은 꺾인 직선인데, 만기 전에는 그 꺾인 점이 매끄럽게 펴진 모양이다.</p>
@@ -30,7 +32,7 @@ labels: 퀀트 공부 일기, 금융공학, 옵션
 <p>그릭스끼리 묶는 식도 하나 있다. 블랙숄즈 편미분방정식 자체가 그릭스로 쓰여 있다.</p>
 <pre><code>Θ + (1/2)·σ²·S²·Γ + r·S·Δ − r·V = 0</code></pre>
 <p>델타 헤지를 해서 주가 1차 위험을 없앤 포지션은 무위험이자율만큼 벌어야 한다는 조건을 옮긴 식이다. 이 식을 읽으면 <strong>감마를 산 사람은 세타를 낸다</strong>는 뜻이 된다. 감마가 크면(주가가 크게 움직일 때 이득) 그 대가로 시간이 갈 때 가치를 잃는다.</p>
-<!--card:compare-->
+<div style="text-align:center;margin:28px 0"><img src="https://raw.githubusercontent.com/kcy19981201-create/autoblog/main/images/2026-10-28-quant-diary-06-greeks-delta-gamma-vega/compare.png" alt="퀀트 공부 일기 #6 - 그릭스: 델타, 감마, 베가 - GREEKS TABLE" style="width:100%;max-width:640px;border-radius:18px" /></div>
 
 <h2>예시 숫자: 2026년 10월 27일 코스피로 계산</h2>
 <p><strong>2026년 10월 27일 코스피는 5,638.35에 마감</strong>했다(전 거래일 대비 3.09% 상승). 하루 전에는 1.46% 내렸으니 이틀 사이 주가가 크게 오르내린 셈이고, 감마를 보기에 좋은 날이다. 금리는 <strong>10월 22일 동결된 기준금리 연 3.00%</strong>를 연속복리로 간주해 쓰고, 로를 확인할 때는 같은 날 <strong>국고채 3년물 금리 연 3.758%</strong>를 넣는다. 행사가 5,640, 만기 91일, 변동성 연 30%, 배당 없음은 모두 가정이다. 실제 지수옵션의 기초자산은 코스피200이니 숫자 감각을 위한 예시다.</p>
@@ -127,7 +129,7 @@ K=6300: 콜=128.87 델타=0.2690 감마=0.000391 베가(1%p)=9.29
 91일: 감마=0.000469 베가(1%p)=11.15 세타(1일)=-2.06
 365일: 감마=0.000229 베가(1%p)=21.81 세타(1일)=-1.11</code></pre>
 <p>* 코스피 5,638.35(2026.10.27 종가), 기준금리 3.00%(2026.10.22), 국고채 3년 3.758%(2026.10.27)만 실제 숫자이고, 행사가·만기·변동성 30%·배당 없음은 가정. 무위험이자율은 연속복리로 간주.</p>
-<!--card:bars-->
+<div style="text-align:center;margin:28px 0"><img src="https://raw.githubusercontent.com/kcy19981201-create/autoblog/main/images/2026-10-28-quant-diary-06-greeks-delta-gamma-vega/bars.png" alt="퀀트 공부 일기 #6 - 그릭스: 델타, 감마, 베가 - SENSITIVITY" style="width:100%;max-width:640px;border-radius:18px" /></div>
 
 <h2>출력에서 읽은 것</h2>
 <ul>
@@ -148,7 +150,7 @@ K=6300: 콜=128.87 델타=0.2690 감마=0.000391 베가(1%p)=9.29
 <li><strong>시나리오와 근사</strong>: 작은 움직임은 델타-감마 근사로 빠르게 손익을 추정하고, 큰 충격은 전체 재평가로 확인한다. 위 출력의 3% 와 10% 비교가 그 기준을 정하는 감각이다.</li>
 </ul>
 <p>금리 상품에서도 같은 생각이 그대로 쓰인다. <a href="https://quantlib-diary.blogspot.com/2026/10/3.html">#3</a>의 듀레이션은 채권 가격의 금리 델타, 컨벡시티는 금리 감마에 해당한다. 이름만 다르고 테일러 전개 1차·2차 항이라는 점은 같다.</p>
-<!--card:summary-->
+<div style="text-align:center;margin:28px 0"><img src="https://raw.githubusercontent.com/kcy19981201-create/autoblog/main/images/2026-10-28-quant-diary-06-greeks-delta-gamma-vega/summary.png" alt="퀀트 공부 일기 #6 - 그릭스: 델타, 감마, 베가 - SUMMARY" style="width:100%;max-width:640px;border-radius:18px" /></div>
 
 <h2>자주 묻는 질문</h2>
 <h3>Q. 델타를 행사 확률로 읽어도 되나?</h3>
