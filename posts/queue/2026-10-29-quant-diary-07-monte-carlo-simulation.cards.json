@@ -1,0 +1,42 @@
+{
+ "style": "pro",
+ "theme": "navy",
+ "cards": [
+  {"name": "cover", "type": "cover", "tag": "QUANT DIARY #7",
+   "title": "몬테카를로\n**시뮬레이션**",
+   "subtitle": "공식이 없을 때 기댓값을 직접 뽑는 법",
+   "chips": ["Monte Carlo", "Variance Reduction", "Asian Option"]},
+  {"name": "idea", "type": "points", "tag": "KEY IDEA",
+   "title": "기댓값을 표본평균으로 바꾼다",
+   "points": [
+    {"t": "경로 생성", "d": "위험중립 드리프트 r − σ²/2 로 주가 경로"},
+    {"t": "할인 손익 평균", "d": "큰수의 법칙으로 참값에 수렴"},
+    {"t": "표준오차 s/√N", "d": "경로 100배에 오차 10분의 1"},
+    {"t": "차원에 강하다", "d": "다자산·경로의존 상품의 기본 도구"}
+   ]},
+  {"name": "compare", "type": "compare", "tag": "VARIANCE REDUCTION",
+   "title": "같은 10만 번 계산, 표준오차 비교",
+   "headers": ["방법", "가격", "표준오차"],
+   "rows": [
+    ["기본", "384.79", "1.87"],
+    ["대조변수", "384.99", "1.42"],
+    ["통제변수", "385.63", "0.85"],
+    ["블랙숄즈 정답", "386.56", "-"]
+   ],
+   "tip": "코스피 6,012.44(10/28), r 3.00%, σ 30%·행사가 6,000·91일 가정"},
+  {"name": "bars", "type": "bars", "tag": "CONVERGENCE",
+   "title": "경로 수에 따른 표준오차",
+   "items": [
+    {"label": "N = 1,000", "value": 18.54, "display": "18.54"},
+    {"label": "N = 10,000", "value": 5.80, "display": "5.80"},
+    {"label": "N = 100,000", "value": 1.86, "display": "1.86"},
+    {"label": "N = 1,000,000", "value": 0.59, "display": "0.59"}
+   ],
+   "takeaway": "경로를 10배 늘리면 오차는 약 3.16배 줄어든다",
+   "note": "* 유럽형 콜, 행사가·만기·변동성은 가정. 코스피 2026.10.28 종가 기준"},
+  {"name": "summary", "type": "check", "tag": "SUMMARY",
+   "title": "몬테카를로 정리",
+   "items": ["S_T = S0·exp((r−σ²/2)T + σ√T·Z)", "결과는 신뢰구간과 같이 읽는다", "통제변수로 분산을 크게 줄인다", "민감도는 같은 난수로 계산", "조기행사·저차원은 트리나 FDM"],
+   "tip": "다음 일기: 유한차분법 FDM"}
+ ]
+}
