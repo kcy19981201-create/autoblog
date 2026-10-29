@@ -1,0 +1,41 @@
+{
+ "style": "pro",
+ "theme": "navy",
+ "cards": [
+  {"name": "cover", "type": "cover", "tag": "QUANT DIARY #8",
+   "title": "유한차분법\n**FDM**",
+   "subtitle": "PDE를 격자 위에서 거꾸로 푸는 법",
+   "chips": ["Finite Difference", "Crank-Nicolson", "American Option"]},
+  {"name": "idea", "type": "points", "tag": "KEY IDEA",
+   "title": "만기에서 오늘로 격자를 걷는다",
+   "points": [
+    {"t": "가격 = PDE의 해", "d": "파인만-카츠로 기댓값과 같은 값"},
+    {"t": "미분 → 차분", "d": "테일러 전개, 중심차분은 2차 정확도"},
+    {"t": "삼중대각 연립방정식", "d": "토마스 알고리즘으로 M에 비례"},
+    {"t": "조기행사는 max 한 번", "d": "격자점마다 행사가치와 비교"}
+   ]},
+  {"name": "compare", "type": "compare", "tag": "THREE SCHEMES",
+   "title": "세 가지 시간 방향 근사",
+   "headers": ["방법", "안정성", "시간 정확도"],
+   "rows": [
+    ["명시적 θ=0", "조건부", "1차"],
+    ["암시적 θ=1", "무조건", "1차"],
+    ["크랭크-니콜슨", "무조건", "2차"]
+   ],
+   "tip": "명시적 안정 조건: Δt ≤ 1/(σ²M²) 근사"},
+  {"name": "bars", "type": "bars", "tag": "CONVERGENCE",
+   "title": "크랭크-니콜슨 오차(절댓값)",
+   "items": [
+    {"label": "M=60, N=30", "value": 4.25, "display": "4.25"},
+    {"label": "M=120, N=60", "value": 0.86, "display": "0.86"},
+    {"label": "M=240, N=120", "value": 0.14, "display": "0.14"},
+    {"label": "M=480, N=240", "value": 0.01, "display": "0.01"}
+   ],
+   "takeaway": "격자를 2배 늘리면 오차는 약 4분의 1 이하로",
+   "note": "* 유럽형 풋, 블랙숄즈 329.41 대비. 코스피 10/28 종가, 행사가·만기·변동성은 가정"},
+  {"name": "summary", "type": "check", "tag": "SUMMARY",
+   "title": "유한차분법 정리",
+   "items": ["블랙숄즈 PDE를 S×t 격자에 배치", "명시적은 Δt를 작게, 어기면 발산", "크랭크-니콜슨이 실무 기본값", "미국형 풋 332.54, 프리미엄 3.14", "저차원·조기행사 상품에 강하다"],
+   "tip": "다음 일기: 금리 모형 기초"}
+ ]
+}

@@ -1,0 +1,220 @@
+---
+title: 퀀트 공부 일기 #8 - 유한차분법 FDM
+labels: 퀀트 공부 일기, 금융공학, 옵션
+---
+<p><strong>2026년 10월 30일.</strong></p>
+<p><a href="https://quantlib-diary.blogspot.com/2026/10/7.html">#7</a>의 몬테카를로는 기댓값을 표본평균으로 바꿨다. 같은 가격을 반대 방향에서 구하는 방법이 있다. 블랙숄즈 가격은 기댓값이면서 동시에 <strong>편미분방정식(PDE)의 해</strong>이기도 하다. 이 PDE를 주가×시간 격자 위에 깔고, 미분을 차분으로 바꿔 만기에서 오늘로 거꾸로 풀어 가는 것이 <strong>유한차분법(Finite Difference Method, FDM)</strong>이다. 오늘은 차분 근사가 어디서 나오는지, 명시적·암시적·크랭크-니콜슨 세 방법의 차이, 명시적 방법이 터지는 안정성 조건, 그리고 몬테카를로로는 어려웠던 미국형 풋까지 정리한다.</p>
+<!--card:idea-->
+
+<h2>직관: 만기 손익에서 오늘로 거꾸로 걷는다</h2>
+<p>만기 T 에서 옵션 값은 손익 그 자체다. 풋이면 V(S, T) = max(K − S, 0). 여기서 시간을 한 칸씩 뒤로 가면서 각 주가 격자점의 값을 이웃 점들의 값으로 갱신한다. <a href="https://quantlib-diary.blogspot.com/2026/10/4.html">#4</a>의 이항 트리와 구조가 같다. 트리는 "한 칸 뒤의 두 점의 위험중립 평균을 할인"했고, FDM은 "PDE가 정한 규칙대로 이웃 세 점을 섞는다". 실제로 명시적 FDM은 세 갈래 트리(삼항 트리)와 거의 같은 식이 된다.</p>
+<ul>
+<li>트리와 달리 격자가 주가 축에 고정돼 있어서, 경계 조건·배리어·조기행사를 격자점에서 바로 처리할 수 있다.</li>
+<li>한 번 풀면 오늘 시점의 <strong>모든 주가</strong>에 대한 가격이 나온다. 델타·감마는 옆 격자점과의 차분으로 공짜에 가깝게 얻는다.</li>
+<li>대신 격자를 까는 방법이라 기초자산이 2~3개를 넘으면 격자점 수가 차원에 따라 거듭제곱으로 늘어난다. #7에서 말한 차원의 저주가 여기다.</li>
+</ul>
+
+<h2>수식: PDE와 차분 근사</h2>
+<p><a href="https://quantlib-diary.blogspot.com/2026/10/5_01857029615.html">#5</a>에서 무차익 헤지 포트폴리오로 유도한 블랙숄즈 PDE는 이렇다.</p>
+<pre><code>∂V/∂t + (1/2)·σ²·S²·∂²V/∂S² + r·S·∂V/∂S − r·V = 0</code></pre>
+<p>파인만-카츠 정리가 이 PDE의 해와 위험중립 기댓값 e^(−r(T−t))·E^Q[payoff] 가 같다는 것을 보장한다. 그래서 몬테카를로와 FDM은 같은 숫자를 다른 길로 구하는 셈이다.</p>
+<p>차분 근사는 <strong>테일러 전개</strong>에서 나온다. 간격 h 로 떨어진 점에서</p>
+<pre><code>V(S+h) = V(S) + h·V'(S) + (h²/2)·V''(S) + (h³/6)·V'''(S) + …
+V(S−h) = V(S) − h·V'(S) + (h²/2)·V''(S) − (h³/6)·V'''(S) + …</code></pre>
+<p>두 식을 빼면 중심차분 V' ≈ [V(S+h) − V(S−h)] / (2h), 더하면 V'' ≈ [V(S+h) − 2V(S) + V(S−h)] / h² 가 된다. 홀수 차수 항이 서로 지워져서 오차가 h² 에 비례한다(2차 정확도). 한쪽만 쓰는 전진·후진차분은 오차가 h 에 비례(1차)한다.</p>
+<p>주가 격자를 S_i = i·ΔS (i = 0, …, M), 시간 간격을 Δt 로 두고 공간 미분을 중심차분으로 바꾸면 각 격자점에서</p>
+<pre><code>(LV)_i = l_i·V_(i−1) + d_i·V_i + u_i·V_(i+1)
+l_i = (σ²i² − r·i)/2,   d_i = −σ²i² − r,   u_i = (σ²i² + r·i)/2</code></pre>
+<p>가 된다. S_i = i·ΔS 를 넣으면 ΔS 가 약분돼서 계수에 i 만 남는다. 이제 시간 방향을 어떻게 근사하느냐로 세 방법이 갈린다. 만기까지 남은 시간 τ = T − t 로 보면 ∂V/∂τ = LV 이고, θ 를 섞는 비율로 두면</p>
+<pre><code>V^(n+1) − V^n = Δt·[ θ·L·V^(n+1) + (1−θ)·L·V^n ]</code></pre>
+<ul>
+<li><strong>θ = 0, 명시적(explicit)</strong>: 새 값이 이미 아는 값만으로 바로 계산된다. 계산은 쉽지만 안정성 조건이 있다.</li>
+<li><strong>θ = 1, 암시적(implicit)</strong>: 새 값 V^(n+1) 이 양변에 다 있어서 매 시간 단계마다 연립방정식을 풀어야 한다. 대신 Δt 를 크게 잡아도 터지지 않는다. 시간 방향 정확도는 1차.</li>
+<li><strong>θ = 1/2, 크랭크-니콜슨</strong>: 두 시점의 평균. 시간 방향도 2차 정확도가 된다. 실무 기본값이다.</li>
+</ul>
+<p>암시적 쪽의 연립방정식은 <strong>선형대수</strong> 문제다. 각 행에 V_(i−1), V_i, V_(i+1) 세 개만 등장하니 계수 행렬은 대각선과 그 바로 위·아래만 0이 아닌 <strong>삼중대각행렬</strong>이다. 일반 가우스 소거는 M³ 에 비례하는 계산이 들지만, 삼중대각이면 앞에서 한 번 소거하고 뒤에서 한 번 대입하는 <strong>토마스 알고리즘</strong>으로 M 에 비례하는 계산이면 된다. 격자점 수가 늘어도 감당할 수 있는 이유다.</p>
+<p>명시적 방법의 <strong>안정성 조건</strong>은 수치해석에서 폰 노이만 분석으로 구한다. 오차를 격자 위에서 지그재그로 진동하는 성분으로 쪼개 보면, 가장 빠르게 진동하는 성분이 한 단계마다 (1 − 2σ²i²Δt) 배쯤 된다. 이 절댓값이 1을 넘으면 오차가 매 단계 증폭되므로 대략 Δt ≤ 1/(σ²·M²) 이 필요하다. 공간 격자를 2배 촘촘히 하면 시간 간격은 4배 줄여야 한다는 뜻이라, 명시적 방법은 격자를 키울수록 급격히 비싸진다.</p>
+<!--card:compare-->
+
+<h2>예시 숫자: 코스피 6,012.44 기준 풋</h2>
+<p>지난 일기와 같은 <strong>2026년 10월 28일 코스피 종가 6,012.44</strong>를 쓴다. 금리는 <strong>10월 22일 동결된 기준금리 연 3.00%</strong>를 연속복리로 간주한다. 참고로 10월 29일 국고채 3년물은 연 3.766%로 전날보다 3.3bp 내렸다. 행사가 6,000, 만기 91일, 변동성 연 30%, 배당 없음은 가정이다. 이번에는 조기행사 효과를 보기 위해 콜 대신 <strong>풋</strong>을 평가한다. 배당이 없으면 미국형 콜은 조기행사할 이유가 없어서 유럽형과 값이 같기 때문이다.</p>
+<p>격자는 주가 0에서 3K(18,000)까지, 경계 조건은 S = 0 에서 유럽형 풋 = K·e^(−rτ), 미국형 풋 = K(바로 행사), S = 3K 에서 0으로 둔다.</p>
+
+<h2>파이썬과 QuantLib으로 확인</h2>
+<pre><code>import numpy as np
+import QuantLib as ql
+from math import log, sqrt, exp, erf
+
+def N(x): return 0.5*(1+erf(x/sqrt(2)))
+
+# 2026-10-28 코스피 종가 6,012.44 / 기준금리 3.00% (2026-10-22 동결)
+S0, K, r, sigma, T = 6012.44, 6000.0, 0.03, 0.30, 91/365   # 행사가·만기·변동성은 가정
+
+d1 = (log(S0/K) + (r + 0.5*sigma**2)*T) / (sigma*sqrt(T)); d2 = d1 - sigma*sqrt(T)
+bs_put = K*exp(-r*T)*N(-d2) - S0*N(-d1)
+print(f"블랙숄즈 유럽형 풋 = {bs_put:,.2f}")
+
+def tridiag_solve(a, b, c, d):
+    # 토마스 알고리즘: a 아래대각, b 대각, c 위대각
+    n = len(d); cp = np.zeros(n); dp = np.zeros(n)
+    cp[0] = c[0]/b[0]; dp[0] = d[0]/b[0]
+    for i in range(1, n):
+        m = b[i] - a[i]*cp[i-1]
+        cp[i] = c[i]/m if i &lt; n-1 else 0.0
+        dp[i] = (d[i] - a[i]*dp[i-1])/m
+    x = np.zeros(n); x[-1] = dp[-1]
+    for i in range(n-2, -1, -1):
+        x[i] = dp[i] - cp[i]*x[i+1]
+    return x
+
+def fd_put(M, Nt, theta, american=False, Smax_mult=3.0):
+    """theta=0 명시적, 1 암시적, 0.5 크랭크-니콜슨"""
+    Smax = Smax_mult*K; dS = Smax/M; dt = T/Nt
+    S = np.linspace(0, Smax, M+1); i = np.arange(1, M)
+    V = np.maximum(K - S, 0.0)                     # 만기 조건
+    # 공간 연산자 L V_i = l_i V_{i-1} + d_i V_i + u_i V_{i+1}
+    l = 0.5*sigma**2*i**2 - 0.5*r*i
+    d = -(sigma**2*i**2) - r
+    u = 0.5*sigma**2*i**2 + 0.5*r*i
+    for n in range(Nt):
+        tau = (n+1)*dt                              # 만기까지 남은 시간
+        lo_new = K*exp(-r*tau) if not american else K   # S=0 경계
+        rhs = V[1:-1] + (1-theta)*dt*(l*V[:-2] + d*V[1:-1] + u*V[2:])
+        if theta == 0:
+            Vn = rhs
+        else:
+            a = -theta*dt*l; b = 1 - theta*dt*d; c = -theta*dt*u
+            rhs = rhs.copy(); rhs[0] -= a[0]*lo_new
+            Vn = tridiag_solve(a, b, c, rhs)
+        V = np.concatenate(([lo_new], Vn, [0.0]))
+        if american:
+            V = np.maximum(V, K - S)                # 조기행사 조건
+    return np.interp(S0, S, V)
+
+print("\n[1] 격자 크기별 유럽형 풋 (크랭크-니콜슨)")
+for M, Nt in [(60, 30), (120, 60), (240, 120), (480, 240)]:
+    v = fd_put(M, Nt, 0.5)
+    print(f"M={M:&gt;3}, N={Nt:&gt;3}: {v:,.2f}  오차={v-bs_put:+.2f}")
+
+print("\n[2] 같은 격자(M=240)에서 방법별 비교")
+for name, theta, Nt in [("명시적 N=1300", 0.0, 1300), ("명시적 N=1000", 0.0, 1000), ("명시적 N=800", 0.0, 800),
+                        ("암시적 N=50", 1.0, 50), ("크랭크-니콜슨 N=50", 0.5, 50)]:
+    v = fd_put(240, Nt, theta)
+    print(f"{name:&lt;16}: {v:,.4g}" if abs(v) &gt; 1e6 else f"{name:&lt;16}: {v:,.2f}")
+
+# 명시적 방법 안정성 조건: dt &lt;= dS^2/(sigma^2 S_max^2) 근사
+M = 240; Smax = 3*K; dS = Smax/M
+dt_max = 1/(sigma**2*M**2)
+print(f"명시적 안정 조건 근사: dt &lt;= {dt_max:.2e}년 → N &gt;= {int(np.ceil(T/dt_max))}")
+
+print("\n[3] 미국형 풋 (조기행사)")
+am = fd_put(480, 240, 0.5, american=True)
+eu = fd_put(480, 240, 0.5)
+print(f"FDM 미국형 풋 = {am:,.2f}, 유럽형 풋 = {eu:,.2f}, 조기행사 프리미엄 = {am-eu:.2f}")
+
+# QuantLib 유한차분 엔진
+today = ql.Date(28, 10, 2026); ql.Settings.instance().evaluationDate = today
+dc = ql.Actual365Fixed()
+spot = ql.QuoteHandle(ql.SimpleQuote(S0))
+rts = ql.YieldTermStructureHandle(ql.FlatForward(today, r, dc, ql.Continuous))
+qts = ql.YieldTermStructureHandle(ql.FlatForward(today, 0.0, dc, ql.Continuous))
+vts = ql.BlackVolTermStructureHandle(ql.BlackConstantVol(today, ql.NullCalendar(), sigma, dc))
+proc = ql.BlackScholesMertonProcess(spot, qts, rts, vts)
+mat = today + 91
+payoff = ql.PlainVanillaPayoff(ql.Option.Put, K)
+amer = ql.VanillaOption(payoff, ql.AmericanExercise(today, mat))
+amer.setPricingEngine(ql.FdBlackScholesVanillaEngine(proc, 200, 400))
+print(f"QuantLib FD 미국형 풋 = {amer.NPV():,.2f}  델타={amer.delta():.4f} 감마={amer.gamma():.6f}")
+amer.setPricingEngine(ql.BinomialVanillaEngine(proc, "crr", 2000))
+print(f"QuantLib 이항트리(2000단계) 미국형 풋 = {amer.NPV():,.2f}")
+euro = ql.VanillaOption(payoff, ql.EuropeanExercise(mat))
+euro.setPricingEngine(ql.FdBlackScholesVanillaEngine(proc, 200, 400))
+print(f"QuantLib FD 유럽형 풋 = {euro.NPV():,.2f}")
+
+# 조기행사 경계: 오늘 시점에서 즉시 행사가 유리해지는 주가
+Smax = 3*K; Mg = 960; S = np.linspace(0, Smax, Mg+1)
+def fd_put_grid(M, Nt):
+    dS = Smax/M; dt = T/Nt; S = np.linspace(0, Smax, M+1); i = np.arange(1, M)
+    V = np.maximum(K - S, 0.0)
+    l = 0.5*sigma**2*i**2 - 0.5*r*i; d = -(sigma**2*i**2) - r; u = 0.5*sigma**2*i**2 + 0.5*r*i
+    a = -0.5*dt*l; b = 1 - 0.5*dt*d; c = -0.5*dt*u
+    for n in range(Nt):
+        rhs = V[1:-1] + 0.5*dt*(l*V[:-2] + d*V[1:-1] + u*V[2:]); rhs[0] -= a[0]*K
+        V = np.concatenate(([K], tridiag_solve(a, b, c, rhs), [0.0]))
+        V = np.maximum(V, K - S)
+    return S, V
+S, V = fd_put_grid(960, 480)
+ex = S[(V - (K - S) &lt; 1e-8) &amp; (S &lt; K)]
+print(f"오늘 기준 조기행사 경계 ≈ {ex.max():,.0f} (이 주가 이하면 즉시 행사가 최적)")</code></pre>
+<p>실행 결과:</p>
+<pre><code>블랙숄즈 유럽형 풋 = 329.41
+
+[1] 격자 크기별 유럽형 풋 (크랭크-니콜슨)
+M= 60, N= 30: 325.15  오차=-4.25
+M=120, N= 60: 328.54  오차=-0.86
+M=240, N=120: 329.27  오차=-0.14
+M=480, N=240: 329.40  오차=-0.01
+
+[2] 같은 격자(M=240)에서 방법별 비교
+명시적 N=1300      : 329.30
+명시적 N=1000      : 329.31
+명시적 N=800       : 7.546e+06
+암시적 N=50        : 328.36
+크랭크-니콜슨 N=50    : 329.27
+명시적 안정 조건 근사: dt &lt;= 1.93e-04년 → N &gt;= 1293
+
+[3] 미국형 풋 (조기행사)
+FDM 미국형 풋 = 332.54, 유럽형 풋 = 329.40, 조기행사 프리미엄 = 3.14
+QuantLib FD 미국형 풋 = 332.55  델타=-0.4508 감마=0.000449
+QuantLib 이항트리(2000단계) 미국형 풋 = 332.52
+QuantLib FD 유럽형 풋 = 329.41
+오늘 기준 조기행사 경계 ≈ 4,575 (이 주가 이하면 즉시 행사가 최적)</code></pre>
+<p>* 코스피 6,012.44(2026.10.28 종가), 기준금리 3.00%(2026.10.22), 국고채 3년 3.766%(2026.10.29)만 실제 숫자이고, 행사가·만기·변동성 30%·배당 없음은 가정. 무위험이자율은 연속복리로 간주.</p>
+<!--card:bars-->
+
+<h2>출력에서 읽은 것</h2>
+<ul>
+<li><strong>크랭크-니콜슨은 격자를 2배 늘릴 때 오차가 약 4분의 1로 준다.</strong> 블랙숄즈 정답 329.41 대비 오차가 −4.25 → −0.86 → −0.14 → −0.01. 공간·시간 모두 2차 정확도라 격자 간격을 반으로 줄이면 오차가 약 (1/2)² 배가 된다. 처음 단계는 4.9배, 다음은 6배쯤 줄었는데, 행사가에서 꺾인 만기 손익 때문에 초반에는 이론 비율과 조금 어긋난다.</li>
+<li><strong>명시적 방법은 조건을 어기면 숫자가 아니게 된다.</strong> 같은 공간 격자 M = 240 에서 N = 1,300 은 329.30, N = 800 은 754만이 나왔다. 안정 조건 근사로는 N ≥ 1,293 이 필요하다. N = 1,000 은 조건을 살짝 어겼는데도 329.31 로 버텼다. 이 조건은 가장 빠르게 진동하는 성분 기준의 보수적인 경계라서, 실제로 터지는 지점은 그보다 조금 아래에 있다. 그렇다고 기대어 쓸 수 있는 여유는 아니다.</li>
+<li><strong>같은 N = 50 이면 크랭크-니콜슨이 암시적보다 정확하다.</strong> 암시적 328.36(오차 −1.05), 크랭크-니콜슨 329.27(오차 −0.14). 둘 다 안정적이지만 시간 방향 정확도가 1차와 2차로 다르다. 시간 단계 50번으로 명시적 1,300번보다 비슷하거나 좋은 결과를 낸다.</li>
+<li><strong>미국형 풋은 매 단계 max(계속 보유 가치, 즉시 행사 가치)만 넣으면 된다.</strong> 직접 짠 FDM 332.54, QuantLib FD 엔진 332.55, QuantLib 이항 트리 2,000단계 332.52 로 세 값이 0.03 안에서 맞는다. 유럽형 329.40 과의 차이 3.14 가 조기행사 프리미엄이다. 금리가 연 3% 라 행사가를 일찍 받아 굴리는 이득이 작아서 프리미엄도 1% 정도다.</li>
+<li><strong>조기행사 경계도 같이 나온다.</strong> 오늘 기준으로 코스피가 약 4,575 이하라면 이 풋은 들고 있는 것보다 바로 행사하는 편이 낫다(격자 간격 18.75 수준의 근사). 몬테카를로로는 이 경계를 구하기 위해 회귀를 섞은 별도 기법이 필요했는데, FDM에서는 격자점마다 비교 한 번이면 된다.</li>
+<li><strong>그릭스가 함께 나온다.</strong> QuantLib FD 엔진은 델타 −0.4508, 감마 0.000449 를 격자에서 바로 계산했다. #6과 #7에서 범프 앤 리밸류로 두 번 평가하던 일을 한 번의 풀이로 대신한다.</li>
+</ul>
+<!--card:summary-->
+
+<h2>리스크관리에서 FDM을 쓰는 곳</h2>
+<p>석사 때 배운 범위에서 FDM이 등장하는 자리를 정리하면 이렇다.</p>
+<ul>
+<li><strong>조기행사가 있는 저차원 상품</strong>: 미국형 옵션, 조기상환 조건이 붙은 구조. 매 시점 조건을 격자에서 직접 비교할 수 있다.</li>
+<li><strong>배리어 옵션</strong>: 배리어를 격자 경계로 두면 된다. 격자점이 배리어 위에 정확히 오도록 까는 것이 정확도의 핵심이다.</li>
+<li><strong>금리 모형</strong>: 다음 일기부터 다룰 단기금리 모형도 PDE로 쓸 수 있어서, 채권옵션 같은 상품을 금리 축 격자에서 푼다.</li>
+<li><strong>민감도</strong>: 델타·감마는 격자 차분으로, 베가처럼 모형 파라미터 민감도는 같은 격자로 다시 풀어 범프한다.</li>
+</ul>
+<p>실무에서 주의할 점도 배웠다. 만기 손익이 행사가에서 꺾여 있어서 크랭크-니콜슨이 초반 몇 단계에서 작은 진동을 만들 수 있다. 그래서 처음 몇 단계만 암시적으로 돌리는 방법(라나허 스무딩)을 쓰곤 한다. 또 주가 대신 ln S 를 격자 변수로 쓰면 PDE 계수가 상수가 되어 다루기 쉬워진다. QuantLib FD 엔진도 내부에서 로그 주가 격자를 쓴다.</p>
+
+<h2>자주 묻는 질문</h2>
+<h3>Q. 몬테카를로, 트리, FDM 중 무엇을 써야 하나?</h3>
+<p>기초자산이 1~2개이고 조기행사나 배리어가 있으면 FDM이나 트리, 경로의존이 강하거나 기초자산이 많으면 몬테카를로가 보통의 선택이다. 같은 상품을 두 방법으로 평가해 서로 검증하는 것도 좋은 습관이다. 오늘 FDM과 트리가 0.03 안에서 맞은 것처럼.</p>
+<h3>Q. 격자 경계를 3K 로 둔 이유는?</h3>
+<p>풋 값이 사실상 0이 되는 충분히 먼 곳이면 된다. 만기까지 변동성 σ√T ≈ 0.15 이니 3K 는 현재가에서 7표준편차 넘게 떨어진 곳이다. 너무 가까우면 경계 조건 오차가 안으로 번지고, 너무 멀면 같은 격자점 수에서 간격이 넓어진다.</p>
+<h3>Q. 크랭크-니콜슨이 항상 최선인가?</h3>
+<p>대부분 그렇지만, 위에서 말한 꺾인 손익 근처 진동 때문에 감마가 지저분하게 나올 수 있다. 이때 초반 암시적 단계를 섞거나, 행사가를 격자점 사이 가운데에 오게 까는 식으로 보완한다.</p>
+
+<h2>오늘의 한 줄</h2>
+<p><strong>FDM은 블랙숄즈 PDE를 격자 위에 깔고 만기에서 오늘로 거꾸로 푼다. 명시적은 쉽지만 Δt ≤ 1/(σ²M²) 를 지켜야 하고, 크랭크-니콜슨은 삼중대각 연립방정식을 매 단계 풀어 2차 정확도를 얻는다. 조기행사는 격자점마다 max 한 번이다. 다음 일기 #9는 금리 자체를 확률과정으로 보는 금리 모형 기초.</strong></p>
+
+<h2>함께 보면 좋은 글</h2>
+<ul>
+<li><a href="https://quantlib-diary.blogspot.com/2026/10/0.html">퀀트 공부 일기 #0 - 파생상품 평가, 전체 그림부터</a></li>
+<li><a href="https://quantlib-diary.blogspot.com/2026/10/4.html">퀀트 공부 일기 #4 - 이항 트리로 옵션 가격 매기기</a></li>
+<li><a href="https://quantlib-diary.blogspot.com/2026/10/7.html">퀀트 공부 일기 #7 - 몬테카를로 시뮬레이션</a></li>
+</ul>
+
+<h2>참고한 자료</h2>
+<ul>
+<li><a href="https://www.fnnews.com/news/202610281523015061">파이낸셜뉴스 - 코스피, 6%대 급등 6012.44로 마감...10일만 회복 (2026.10.28)</a></li>
+<li><a href="https://biz.sbs.co.kr/article/20000343079">SBS Biz - 국고채 금리 일제히 하락…3년물 연 3.766% (2026.10.29)</a></li>
+<li><a href="https://www.newspim.com/news/view/20261022000540">뉴스핌 - 한은, 기준금리 연 3.00% 만장일치 동결 (2026.10.22)</a></li>
+<li><a href="https://www.quantlib.org/">QuantLib 공식 사이트</a></li>
+</ul>
