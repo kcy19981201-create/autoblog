@@ -2,9 +2,11 @@
 title: 퀀트 공부 일기 #9 - 금리 모형 기초: 바시첵과 CIR
 labels: 퀀트 공부 일기, 금융공학, 금리
 ---
+<span data-cards-built=""></span>
+<div style="text-align:center;margin:28px 0"><img src="https://raw.githubusercontent.com/kcy19981201-create/autoblog/main/images/2026-10-31-quant-diary-09-short-rate-models/cover.png" alt="퀀트 공부 일기 #9 - 금리 모형 기초: 바시첵과 CIR - QUANT DIARY #9" style="width:100%;max-width:640px;border-radius:18px" /></div>
 <p><strong>2026년 10월 31일.</strong></p>
 <p>#4부터 #8까지는 주가가 확률적으로 움직이고 금리 r 은 상수였다. 블랙숄즈에 r = 3% 를 박아 넣고 끝냈다. 그런데 채권, 스왑, 금리옵션처럼 <strong>금리 자체가 기초자산</strong>인 상품에서는 그렇게 할 수 없다. 금리가 오늘 3% 라도 1년 뒤, 3년 뒤에는 다른 값이고, 그 불확실성이 곧 가격이다. 오늘은 금리를 확률과정으로 보는 가장 기본적인 틀인 <strong>단기금리 모형(short-rate model)</strong>을 정리한다. 바시첵 모형 하나를 끝까지 따라가고, CIR 모형과 비교한다. 전체 지도에서 어디쯤인지는 <a href="https://quantlib-diary.blogspot.com/2026/10/0.html">#0 프롤로그</a>에 있다.</p>
-<!--card:idea-->
+<div style="text-align:center;margin:28px 0"><img src="https://raw.githubusercontent.com/kcy19981201-create/autoblog/main/images/2026-10-31-quant-diary-09-short-rate-models/idea.png" alt="퀀트 공부 일기 #9 - 금리 모형 기초: 바시첵과 CIR - KEY IDEA" style="width:100%;max-width:640px;border-radius:18px" /></div>
 
 <h2>직관: 금리는 주가처럼 무한히 떠돌지 않는다</h2>
 <p>주가는 기하 브라운 운동으로 모형화했다. 오래 기다리면 주가의 분포는 점점 넓게 퍼진다. 금리는 성격이 다르다.</p>
@@ -146,7 +148,7 @@ a(회귀 속도) = 0.7732, b(장기 평균) = 4.1199%, 반감기 = 0.90년
   CIR 3년 금리 = 3.6803%  vs 바시첵 3.6809%
   CIR 10년 금리 = 3.9663%  vs 바시첵 3.9684%</code></pre>
 <p>* 기준금리 3.00%(2026.10.22), 국고채 3년 3.715%·10년 4.008%(2026.10.30 마감)만 실제 숫자이고, 단기금리 변동성 σ = 1%p, 단기금리 출발점 = 기준금리, 국고채 금리를 할인채 금리로 간주한 것은 가정이다.</p>
-<!--card:bars-->
+<div style="text-align:center;margin:28px 0"><img src="https://raw.githubusercontent.com/kcy19981201-create/autoblog/main/images/2026-10-31-quant-diary-09-short-rate-models/bars.png" alt="퀀트 공부 일기 #9 - 금리 모형 기초: 바시첵과 CIR - SHORT-RATE SHOCK" style="width:100%;max-width:640px;border-radius:18px" /></div>
 
 <h2>출력에서 읽은 것</h2>
 <ul>
@@ -162,7 +164,7 @@ a(회귀 속도) = 0.7732, b(장기 평균) = 4.1199%, 반감기 = 0.90년
 <p>콕스-잉거솔-로스(CIR, 1985) 모형은 확산 항에 √r 를 곱한다.</p>
 <pre><code>dr(t) = a·(b − r(t))·dt + σ·√r(t)·dW(t)</code></pre>
 <p>금리가 0에 가까워지면 변동성도 0으로 줄어서 드리프트 a·b &gt; 0 가 금리를 다시 밀어 올린다. <strong>펠러 조건</strong> 2ab ≥ σ² 이 성립하면 금리가 0에 닿지도 않는다. 위 출력에서 2ab − σ² = 0.06038 &gt; 0 이라 조건을 만족한다. 대신 r(t) 의 분포는 정규분포가 아니라 비중심 카이제곱 분포가 되어 계산이 더 복잡하다. 할인채 가격은 여전히 아핀 형태 A(τ)·e^(−B(τ)·r) 로 닫힌 식이 있다(A, B 식이 바시첵과 다르다).</p>
-<!--card:compare-->
+<div style="text-align:center;margin:28px 0"><img src="https://raw.githubusercontent.com/kcy19981201-create/autoblog/main/images/2026-10-31-quant-diary-09-short-rate-models/compare.png" alt="퀀트 공부 일기 #9 - 금리 모형 기초: 바시첵과 CIR - MODEL COMPARISON" style="width:100%;max-width:640px;border-radius:18px" /></div>
 <p>정리하면 세 가지 축으로 비교된다.</p>
 <table>
 <tr><th>항목</th><th>바시첵</th><th>CIR</th></tr>
@@ -181,7 +183,7 @@ a(회귀 속도) = 0.7732, b(장기 평균) = 4.1199%, 반감기 = 0.90년
 <li><strong>금리 시나리오와 민감도</strong>: 단기금리 충격이 만기별로 어떻게 전파되는지 모형으로 볼 수 있다. 다만 실무 민감도는 보통 시장 곡선의 각 만기 구간을 하나씩 움직이는 방식(키 레이트)으로 측정하고, 모형은 그 곡선을 정확히 재현하도록 맞춘 뒤 쓴다.</li>
 </ul>
 <p>오늘 본 바시첵·CIR은 파라미터가 상수라 시장 곡선을 정확히 재현하지 못한다. 실제 평가에서는 b 를 시간의 함수로 바꿔 오늘의 할인곡선과 정확히 맞추는 헐-화이트 모형을 많이 쓴다. 시장 곡선 자체를 만드는 부트스트래핑과 함께 로드맵 뒤쪽에서 다룬다.</p>
-<!--card:summary-->
+<div style="text-align:center;margin:28px 0"><img src="https://raw.githubusercontent.com/kcy19981201-create/autoblog/main/images/2026-10-31-quant-diary-09-short-rate-models/summary.png" alt="퀀트 공부 일기 #9 - 금리 모형 기초: 바시첵과 CIR - SUMMARY" style="width:100%;max-width:640px;border-radius:18px" /></div>
 
 <h2>자주 묻는 질문</h2>
 <h3>Q. 단기금리 r(0) 를 왜 기준금리로 두었나?</h3>
