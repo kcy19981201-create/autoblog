@@ -1,0 +1,42 @@
+{
+ "style": "pro",
+ "theme": "navy",
+ "cards": [
+  {"name": "cover", "type": "cover", "tag": "QUANT DIARY #9",
+   "title": "금리 모형 기초\n**바시첵과 CIR**",
+   "subtitle": "금리 자체를 확률과정으로 보는 법",
+   "chips": ["Short Rate", "Vasicek", "CIR"]},
+  {"name": "idea", "type": "points", "tag": "KEY IDEA",
+   "title": "단기금리 하나로 곡선 전체를",
+   "points": [
+    {"t": "평균 회귀", "d": "금리는 장기 평균 b 주변으로 돌아온다"},
+    {"t": "r(t)는 정규분포", "d": "분산은 σ²/2a 로 수렴, 음수 가능"},
+    {"t": "아핀 할인채 가격", "d": "P = A(τ)·exp(−B(τ)·r)"},
+    {"t": "캘리브레이션", "d": "3년·10년 금리에 a, b 를 맞춘다"}
+   ]},
+  {"name": "bars", "type": "bars", "tag": "SHORT-RATE SHOCK",
+   "title": "단기금리 +25bp 시 만기별 변화",
+   "items": [
+    {"label": "1년", "value": 17.4, "display": "+17.4bp"},
+    {"label": "3년", "value": 9.7, "display": "+9.7bp"},
+    {"label": "10년", "value": 3.2, "display": "+3.2bp"},
+    {"label": "30년", "value": 1.1, "display": "+1.1bp"}
+   ],
+   "takeaway": "평균 회귀 때문에 먼 만기일수록 충격이 작다",
+   "note": "* 바시첵 a=0.7732, b=4.12%, σ=1%(가정). 국고채 10/30 마감 3년·10년에 캘리브레이션"},
+  {"name": "compare", "type": "compare", "tag": "MODEL COMPARISON",
+   "title": "바시첵과 CIR",
+   "headers": ["항목", "바시첵", "CIR"],
+   "rows": [
+    ["확산 항", "σ·dW", "σ·√r·dW"],
+    ["r(t) 분포", "정규분포", "비중심 카이제곱"],
+    ["음의 금리", "가능", "불가(펠러 조건)"],
+    ["할인채 가격", "닫힌 식", "닫힌 식"]
+   ],
+   "tip": "같은 a, b 에서 3년·10년 금리 차이는 1bp 미만"},
+  {"name": "summary", "type": "check", "tag": "SUMMARY",
+   "title": "금리 모형 기초 정리",
+   "items": ["dr = a(b − r)dt + σdW", "반감기 ln2/a, 오늘 예시 0.9년", "해석해·MC·QuantLib 0.895451 일치", "충격 전파는 B(τ)/τ 배", "곡선 완전 일치는 헐-화이트로"],
+   "tip": "다음 일기: 신용위험과 부도 확률"}
+ ]
+}
