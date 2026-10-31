@@ -1,0 +1,42 @@
+{
+ "style": "pro",
+ "theme": "navy",
+ "cards": [
+  {"name": "cover", "type": "cover", "tag": "QUANT DIARY #10",
+   "title": "신용위험과\n**부도 확률**",
+   "subtitle": "신용스프레드 안에 든 부도 확률 꺼내기",
+   "chips": ["Hazard Rate", "Credit Spread", "Merton"]},
+  {"name": "idea", "type": "points", "tag": "KEY IDEA",
+   "title": "스프레드 = 부도 확률 × 손실률",
+   "points": [
+    {"t": "생존확률", "d": "Q(t) = exp(−λt), λ 는 부도 강도"},
+    {"t": "신용 삼각형", "d": "s ≈ λ(1 − R), 셋 중 둘이면 나머지"},
+    {"t": "위험중립 확률", "d": "유동성·위험 프리미엄이 섞여 있다"},
+    {"t": "회수율 가정", "d": "같은 스프레드도 R 에 따라 PD 변화"}
+   ]},
+  {"name": "bars", "type": "bars", "tag": "RECOVERY ASSUMPTION",
+   "title": "스프레드 68.2bp, 회수율별 3년 PD",
+   "items": [
+    {"label": "R = 0%", "value": 2.03, "display": "2.03%"},
+    {"label": "R = 20%", "value": 2.53, "display": "2.53%"},
+    {"label": "R = 40%", "value": 3.35, "display": "3.35%"},
+    {"label": "R = 60%", "value": 4.99, "display": "4.99%"}
+   ],
+   "takeaway": "회수율이 높을수록 같은 스프레드에 더 잦은 부도가 필요하다",
+   "note": "* 10/28 ECOS 국고채 3년 3.799%, AA- 3년 4.481%. 신용 삼각형 근사, 회수율은 가정"},
+  {"name": "compare", "type": "compare", "tag": "MODEL COMPARISON",
+   "title": "축약형과 구조형",
+   "headers": ["항목", "축약형", "구조형(머튼)"],
+   "rows": [
+    ["부도의 정의", "강도 λ 의 사건", "자산 < 부채"],
+    ["시장 가격 일치", "쉽다", "어렵다"],
+    ["단기 스프레드", "현실적", "0 에 가까움"],
+    ["주 용도", "채권·CDS 평가", "기업 신용 분석"]
+   ],
+   "tip": "머튼 예시는 스프레드 65.6bp 인데 PD 는 11.05%"},
+  {"name": "summary", "type": "check", "tag": "SUMMARY",
+   "title": "신용위험과 부도 확률 정리",
+   "items": ["PD(t) = 1 − exp(−λt)", "AA- 3년: λ 약 1.1%, PD 약 3.2%", "QuantLib CDS 66.2bp로 검증", "회수율 가정이 결과를 좌우", "머튼: 주식은 자산의 콜옵션"],
+   "tip": "다음 일기: 수익률곡선 부트스트래핑"}
+ ]
+}
