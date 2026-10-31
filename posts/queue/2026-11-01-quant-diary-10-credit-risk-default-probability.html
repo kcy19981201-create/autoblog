@@ -2,9 +2,11 @@
 title: 퀀트 공부 일기 #10 - 신용위험과 부도 확률
 labels: 퀀트 공부 일기, 금융공학, 신용위험
 ---
+<span data-cards-built=""></span>
+<div style="text-align:center;margin:28px 0"><img src="https://raw.githubusercontent.com/kcy19981201-create/autoblog/main/images/2026-11-01-quant-diary-10-credit-risk-default-probability/cover.png" alt="퀀트 공부 일기 #10 - 신용위험과 부도 확률 - QUANT DIARY #10" style="width:100%;max-width:640px;border-radius:18px" /></div>
 <p><strong>2026년 11월 1일.</strong></p>
 <p>#9까지는 돈을 주기로 한 사람이 반드시 준다고 가정했다. 국고채로 할인하면 그게 곧 가격이었다. 회사채는 다르다. 같은 3년 만기라도 국고채보다 금리가 높고, 그 차이가 <strong>신용스프레드</strong>다. 오늘은 그 스프레드 안에 들어 있는 <strong>부도 확률</strong>을 꺼내는 방법을 정리한다. 축약형 모형(hazard rate)으로 시장 스프레드에서 부도 확률을 역산하고, 구조형 모형(머튼)으로 부도가 왜 일어나는지 설명하는 방식과 비교한다. 전체 지도에서 어디쯤인지는 <a href="https://quantlib-diary.blogspot.com/2026/10/0.html">#0 프롤로그</a>에 있다.</p>
-<!--card:idea-->
+<div style="text-align:center;margin:28px 0"><img src="https://raw.githubusercontent.com/kcy19981201-create/autoblog/main/images/2026-11-01-quant-diary-10-credit-risk-default-probability/idea.png" alt="퀀트 공부 일기 #10 - 신용위험과 부도 확률 - KEY IDEA" style="width:100%;max-width:640px;border-radius:18px" /></div>
 
 <h2>직관: 회사채 금리가 더 높은 이유</h2>
 <p>국고채 3년과 AA- 회사채 3년을 비교한다. 둘 다 3년 뒤 액면을 돌려준다고 약속하지만, 회사는 그 전에 부도가 날 수 있다. 투자자는 그 가능성만큼 가격을 깎아서 사고, 가격이 낮다는 건 수익률이 높다는 뜻이다. 그래서</p>
@@ -130,7 +132,7 @@ QuantLib 3년 생존확률 = 96.7516%
   sigma=30%: PD=17.3466%, 스프레드=132.2bp
   sigma=40%: PD=28.9837%, 스프레드=320.1bp</code></pre>
 <p>* 국고채 3년 3.799%, 회사채 AA- 3년 4.481%(2026.10.28, 한국은행 ECOS 시장금리 일별)만 실제 숫자이고, 회수율 40%, 평평한 금리·hazard rate, 머튼 예시 기업의 V·D·σ 는 모두 가정이다. 특정 회사의 부도 확률이 아니라 AA- 등급 평균 금리에서 뽑은 예시 값이다.</p>
-<!--card:bars-->
+<div style="text-align:center;margin:28px 0"><img src="https://raw.githubusercontent.com/kcy19981201-create/autoblog/main/images/2026-11-01-quant-diary-10-credit-risk-default-probability/bars.png" alt="퀀트 공부 일기 #10 - 신용위험과 부도 확률 - RECOVERY ASSUMPTION" style="width:100%;max-width:640px;border-radius:18px" /></div>
 
 <h2>출력에서 읽은 것</h2>
 <ul>
@@ -150,7 +152,7 @@ d2 = [ln(V/D) + (r − σ²/2)·T] / (σ·√T)</code></pre>
 <p>주식이 콜옵션이라는 건 블랙숄즈 공식을 그대로 쓸 수 있다는 뜻이다. 채권은 무위험 채권에서 풋옵션을 하나 판 것과 같다. d2 를 <strong>부도거리(distance to default)</strong>라고 부르고, 기업가치가 부도 경계에서 표준편차 몇 개만큼 떨어져 있는지를 뜻한다. 위 예시에서 1.224 다.</p>
 <p>출력 [5] 아래쪽처럼 자산 변동성을 20% → 40% 로 올리면 스프레드가 22.3bp → 320.1bp 로 커진다. 변동성이 커지면 주주에게는 콜옵션 가치가 올라 좋고, 채권자에게는 판 풋옵션 가치가 올라 손해다. 주주와 채권자의 이해가 갈리는 지점을 옵션 하나로 설명한다는 게 이 모형의 장점이다.</p>
 <p>약점도 분명하다. 자산가치 V 와 그 변동성은 시장에서 보이지 않아 주가와 주가 변동성에서 역산해야 하고, 만기에만 부도가 날 수 있다. 그래서 짧은 만기에서는 스프레드가 거의 0 으로 나와 실제 시장과 맞지 않는다. 가격 평가에서는 시장 스프레드에 바로 맞출 수 있는 축약형을 많이 쓰고, 구조형은 기업별 신용도 분석에 많이 쓴다.</p>
-<!--card:compare-->
+<div style="text-align:center;margin:28px 0"><img src="https://raw.githubusercontent.com/kcy19981201-create/autoblog/main/images/2026-11-01-quant-diary-10-credit-risk-default-probability/compare.png" alt="퀀트 공부 일기 #10 - 신용위험과 부도 확률 - MODEL COMPARISON" style="width:100%;max-width:640px;border-radius:18px" /></div>
 <table>
 <tr><th>항목</th><th>축약형 (hazard rate)</th><th>구조형 (머튼)</th></tr>
 <tr><td>부도의 정의</td><td>외생적 사건, 강도 λ</td><td>자산가치 &lt; 부채</td></tr>
@@ -166,7 +168,7 @@ d2 = [ln(V/D) + (r − σ²/2)·T] / (σ·√T)</code></pre>
 <li><strong>신용 민감도</strong>: 금리 민감도가 할인곡선을 1bp 움직였을 때의 가격 변화였다면, 신용 민감도(CS01)는 스프레드나 hazard rate 곡선을 1bp 움직였을 때의 변화다. <a href="https://quantlib-diary.blogspot.com/2026/10/3.html">#3</a>의 듀레이션과 같은 방식으로 계산한다.</li>
 <li><strong>거래상대방 위험</strong>: 스왑 같은 파생상품도 상대방이 부도 나면 받을 돈을 못 받는다. 그 손실의 기댓값을 가격에 반영하는 조정에 같은 생존확률이 쓰인다. 로드맵의 이자율 스왑 평가 다음에 다시 이어진다.</li>
 </ul>
-<!--card:summary-->
+<div style="text-align:center;margin:28px 0"><img src="https://raw.githubusercontent.com/kcy19981201-create/autoblog/main/images/2026-11-01-quant-diary-10-credit-risk-default-probability/summary.png" alt="퀀트 공부 일기 #10 - 신용위험과 부도 확률 - SUMMARY" style="width:100%;max-width:640px;border-radius:18px" /></div>
 
 <h2>자주 묻는 질문</h2>
 <h3>Q. 스프레드에서 뽑은 부도 확률과 신용평가사 부도율은 왜 다른가?</h3>
