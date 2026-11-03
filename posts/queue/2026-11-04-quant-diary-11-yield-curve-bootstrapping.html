@@ -1,0 +1,184 @@
+---
+title: 퀀트 공부 일기 #11 - 수익률곡선 부트스트래핑
+labels: 퀀트 공부 일기, 금융공학, 수익률곡선
+---
+<p><strong>2026년 11월 4일.</strong></p>
+<p>파생상품이든 채권이든 평가의 첫 줄은 "미래 현금흐름을 오늘 가치로 할인한다"다. 그러려면 1년 뒤, 3.5년 뒤, 7년 뒤 1원의 가치, 즉 <strong>모든 시점의 할인계수</strong>가 필요하다. 그런데 시장이 보여주는 건 2년, 3년, 5년, 10년물 국고채의 만기수익률 몇 개뿐이다. 이 몇 개의 숫자에서 연속된 할인곡선을 뽑아내는 작업이 <strong>부트스트래핑(bootstrapping)</strong>이다. <a href="https://quantlib-diary.blogspot.com/2026/10/1.html">#1</a>에서 할인곡선이 무엇인지 봤다면, 오늘은 그걸 실제 시장 금리로 만드는 방법이다. 전체 지도는 <a href="https://quantlib-diary.blogspot.com/2026/10/0.html">#0 프롤로그</a>에 있다.</p>
+<!--card:idea-->
+
+<h2>직관: 짧은 만기부터 한 칸씩</h2>
+<p>2년 만기 이표채는 6개월마다 쿠폰을 주고 만기에 액면을 준다. 가격을 알고 있고, 2년 안쪽 할인계수를 이미 알고 있다면 모르는 건 "2년 시점 할인계수" 하나뿐이다. 방정식 하나에 미지수 하나라서 바로 풀린다. 다음으로 3년물을 보면 2년까지의 할인계수는 방금 구했으니 또 미지수가 하나만 남는다. 이렇게 짧은 만기에서 긴 만기로 할인계수를 하나씩 확정해 나간다. 앞에서 구한 값을 발판 삼아 다음 값을 구한다고 해서 부트스트래핑이라고 부른다.</p>
+<p>여기서 하나 걸리는 게 있다. 3년물에서 5년물로 넘어갈 때는 3.5년, 4년, 4.5년 시점의 쿠폰도 할인해야 하는데 그 사이를 알려주는 시장 숫자가 없다. 그래서 부트스트래핑은 항상 <strong>노드 사이를 어떻게 채울지(보간)</strong>라는 선택을 함께 한다. 오늘은 이 선택이 결과를 얼마나 바꾸는지도 같이 본다.</p>
+
+<h2>예시 숫자: 2026년 11월 3일 국고채 금리</h2>
+<p>11월 3일 서울 채권시장에서 국고채 금리는 외국인 선물 매수에 전 구간 하락 마감했다.</p>
+<table>
+<tr><th>만기</th><th>2년</th><th>3년</th><th>5년</th><th>10년</th><th>20년</th><th>30년</th></tr>
+<tr><td>금리(연 %)</td><td>3.701</td><td>3.736</td><td>3.870</td><td>4.001</td><td>4.080</td><td>4.089</td></tr>
+<tr><td>전일 대비</td><td>−1.8bp</td><td>−0.4bp</td><td>−2.2bp</td><td>−3.3bp</td><td>−3.5bp</td><td>−4.2bp</td></tr>
+</table>
+<p>2026년 11월 3일 장 마감 기준이다(베타뉴스 보도, 전일 11월 2일 수치와 대조해 확인). 예시를 단순하게 하려고 두 가지를 <strong>가정</strong>한다. 첫째, 각 만기 금리를 반기 이표 채권이 액면 100원에 거래되는 쿠폰율, 즉 <strong>par yield</strong>로 본다. 둘째, 2년보다 짧은 구간은 기사에 같은 날 숫자가 없어서 2년 금리로 평평하게 둔다. 실무에서는 통안채나 단기 국고채 금리로 이 구간을 채운다.</p>
+
+<h2>수식: par 채권 조건과 전진 대입</h2>
+<p>반기 시점 t_1=0.5, t_2=1.0, …, t_n 의 할인계수를 D_1, …, D_n, t_n 만기 par yield 를 c_n 이라 하자. 액면 1원, 반기 쿠폰 c_n/2 인 채권이 가격 1 이라는 조건은</p>
+<pre><code>1 = (c_n/2)·(D_1 + D_2 + … + D_n) + D_n
+→ D_n = (1 − (c_n/2)·(D_1 + … + D_(n−1))) / (1 + c_n/2)</code></pre>
+<p>이다. 둘째 줄이 부트스트래핑의 전부다. 할인계수에서 금리는 이렇게 읽는다.</p>
+<pre><code>제로금리(연속복리)   z(t_n) = −ln(D_n) / t_n
+구간 선도금리        f(t_(n−1), t_n) = −ln(D_n / D_(n−1)) / (t_n − t_(n−1))</code></pre>
+<p>제로금리는 "오늘부터 t 까지" 평균 금리이고, 선도금리는 "그 구간에서만" 적용되는 금리다. 제로금리는 선도금리의 시간 평균이라서, 곡선이 조금만 울퉁불퉁해도 선도금리에서는 크게 드러난다.</p>
+<h3>선형대수로 보면: 하삼각 연립방정식</h3>
+<p>채권 n 개의 가격 조건을 한꺼번에 쓰면 행렬식 C·D = 1 이 된다. C 의 n 번째 행은 n 번째 채권의 현금흐름(앞쪽은 쿠폰 c_n/2, n 번째 칸은 1 + c_n/2, 그 뒤는 0)이다. 만기 n 인 채권은 t_n 이후에 현금흐름이 없으니 대각선 위쪽이 모두 0 인 <strong>하삼각행렬</strong>이다. 하삼각 연립방정식은 첫 행부터 한 미지수씩 풀어 내려가는 <strong>전진 대입(forward substitution)</strong>으로 풀리고, 위 둘째 줄 식이 바로 그 한 단계다. 역행렬을 따로 구할 필요가 없고 계산량도 n² 정도라 빠르다. 시장 상품이 반기 격자마다 다 있지 않으니, 비어 있는 행은 보간으로 만든 가상의 par 채권으로 채운다.</p>
+<!--card:compare-->
+
+<h2>파이썬과 QuantLib으로 확인</h2>
+<p>할 일은 다섯 가지다. (1) par yield 를 반기 격자에 선형보간하고 전진 대입으로 할인계수를 구한다. (2) 3년 par 채권을 다시 가격 매겨 100 이 나오는지 검산한다. (3) 같은 채권 6개로 QuantLib 의 piecewise 부트스트래핑(할인계수 log-linear 보간)을 돌린다. (4) 두 곡선으로 7년 만기 쿠폰 4.0% 채권을 평가한다. (5) 노드별 1bp 민감도를 본다.</p>
+<pre><code>import numpy as np
+import QuantLib as ql
+
+# 2026-11-03 서울 채권시장 국고채 마감 금리(%, 반기 이표 가정, 만기수익률=par yield로 취급)
+mkt = {2: 3.701, 3: 3.736, 5: 3.870, 10: 4.001, 20: 4.080, 30: 4.089}
+T = np.array(list(mkt)); Y = np.array(list(mkt.values()))/100
+
+# 1. 반기 격자에 par yield 선형보간(2년 미만은 2년 값으로 flat)
+grid = np.arange(0.5, 30.01, 0.5)
+par = np.interp(grid, T, Y)
+
+# 2. 부트스트래핑: 짧은 만기부터 할인계수 하나씩
+df = np.zeros(len(grid))
+for n in range(len(grid)):
+    c = par[n]/2
+    df[n] = (1 - c*df[:n].sum())/(1 + c)
+zero = -np.log(df)/grid                 # 연속복리 제로금리
+fwd = np.empty(len(grid)); fwd[0] = zero[0]
+fwd[1:] = -np.log(df[1:]/df[:-1])/0.5  # 반년 구간 선도금리(연속복리)
+
+print("[1] 수동 부트스트래핑 결과")
+print(" 만기  par(%)  DF        zero(%)  6M fwd(%)")
+for t in [1, 2, 3, 5, 10, 20, 30]:
+    i = np.where(np.isclose(grid, t))[0][0]
+    print(f"{t:4d}  {par[i]*100:6.3f}  {df[i]:.6f}  {zero[i]*100:6.3f}  {fwd[i]*100:6.3f}")
+
+# 검산: 3년 par 채권을 부트스트랩 곡선으로 다시 가격
+i3 = np.where(np.isclose(grid, 3))[0][0]
+c = par[i3]/2*100
+p3 = c*df[:i3+1].sum() + 100*df[i3]
+print(f"\n[2] 검산: 3년 쿠폰 {par[i3]*100:.3f}% 채권 가격 = {p3:.6f}")
+
+# 3. QuantLib piecewise 부트스트래핑 (같은 6개 채권, 할인계수 log-linear 보간)
+today = ql.Date(3, 11, 2026); ql.Settings.instance().evaluationDate = today
+cal = ql.NullCalendar(); dc = ql.ActualActual(ql.ActualActual.Bond)
+helpers = []
+for t, y in mkt.items():
+    sch = ql.Schedule(today, today + ql.Period(t, ql.Years), ql.Period(ql.Semiannual), cal,
+                      ql.Unadjusted, ql.Unadjusted, ql.DateGeneration.Backward, False)
+    helpers.append(ql.FixedRateBondHelper(ql.QuoteHandle(ql.SimpleQuote(100.0)), 0, 100.0, sch, [y/100], dc))
+curve = ql.PiecewiseLogLinearDiscount(today, helpers, dc)
+print("\n[3] QuantLib PiecewiseLogLinearDiscount (보간 방식이 다름)")
+print(" 만기  zero(%)  1년 fwd(%)")
+for t in [2, 3, 5, 10, 20, 30]:
+    d = today + ql.Period(t, ql.Years)
+    z = curve.zeroRate(d, dc, ql.Continuous).rate()
+    f = curve.forwardRate(d - ql.Period(1, ql.Years), d, dc, ql.Continuous).rate()
+    print(f"{t:4d}  {z*100:6.3f}  {f*100:6.3f}")
+
+# 4. 같은 곡선으로 '평가': 7년 만기, 쿠폰 4.0% 채권
+i7 = np.where(np.isclose(grid, 7))[0][0]
+pv7 = 2.0*df[:i7+1].sum() + 100*df[i7]
+d7 = today + ql.Period(7, ql.Years)
+sch7 = ql.Schedule(today, d7, ql.Period(ql.Semiannual), cal, ql.Unadjusted, ql.Unadjusted, ql.DateGeneration.Backward, False)
+b7 = ql.FixedRateBond(0, 100.0, sch7, [0.04], dc)
+b7.setPricingEngine(ql.DiscountingBondEngine(ql.YieldTermStructureHandle(curve)))
+print(f"\n[4] 7년 쿠폰 4.0% 채권: 수동 곡선 {pv7:.4f}, QuantLib 곡선 {b7.cleanPrice():.4f}")
+print(f"    7년 par yield(보간) = {par[i7]*100:.4f}%")
+
+# 5. 키레이트 민감도: 노드 par yield 하나씩 +1bp, 7년 4.0% 채권 가격 변화
+def build(Yv):
+    p = np.interp(grid, T, Yv); d = np.zeros(len(grid))
+    for n in range(len(grid)):
+        c = p[n]/2; d[n] = (1 - c*d[:n].sum())/(1 + c)
+    return d
+base = 2.0*build(Y)[:i7+1].sum() + 100*build(Y)[i7]
+print("\n[5] 노드별 +1bp 시 7년 채권 가격 변화(원, 액면 100)")
+tot = 0
+for k, t in enumerate(T):
+    Yb = Y.copy(); Yb[k] += 0.0001
+    d = build(Yb); pv = 2.0*d[:i7+1].sum() + 100*d[i7]
+    tot += pv - base
+    print(f"  {t:2d}년: {pv-base:+.5f}")
+print(f"  합계: {tot:+.5f}")
+Yb = Y + 0.0001; d = build(Yb); print(f"  전체 평행 +1bp: {2.0*d[:i7+1].sum()+100*d[i7]-base:+.5f}")
+print(f"6M fwd 5.0~5.5y: {fwd[np.where(np.isclose(grid,5.5))[0][0]]*100:.3f}, 4.5~5.0y: {fwd[np.where(np.isclose(grid,5))[0][0]]*100:.3f}")</code></pre>
+<p>출력(QuantLib 1.44):</p>
+<pre><code>[1] 수동 부트스트래핑 결과
+ 만기  par(%)  DF        zero(%)  6M fwd(%)
+   1   3.701  0.963993   3.667   3.667
+   2   3.701  0.929282   3.667   3.667
+   3   3.736  0.894861   3.703   3.792
+   5   3.870  0.825202   3.843   4.160
+  10   4.001  0.671456   3.983   4.263
+  20   4.080  0.442799   4.073   4.274
+  30   4.089  0.294383   4.076   4.099
+
+[2] 검산: 3년 쿠폰 3.736% 채권 가격 = 100.000000
+
+[3] QuantLib PiecewiseLogLinearDiscount (보간 방식이 다름)
+ 만기  zero(%)  1년 fwd(%)
+   2   3.667   3.667
+   3   3.703   3.774
+   5   3.842   4.050
+  10   3.980   4.119
+  20   4.068   4.156
+  30   4.072   4.081
+
+[4] 7년 쿠폰 4.0% 채권: 수동 곡선 100.4723, QuantLib 곡선 100.3342
+    7년 par yield(보간) = 3.9224%
+
+[5] 노드별 +1bp 시 7년 채권 가격 변화(원, 액면 100)
+   2년: -0.00002
+   3년: -0.00003
+   5년: -0.03661
+  10년: -0.02437
+  20년: +0.00000
+  30년: +0.00000
+  합계: -0.06103
+  전체 평행 +1bp: -0.06101
+6M fwd 5.0~5.5y: 3.989, 4.5~5.0y: 4.160</code></pre>
+
+<h2>결과 읽기: 곡선, 톱니, 그리고 보간의 값</h2>
+<p><strong>[1] 곡선 모양.</strong> 연속복리 제로금리는 2년 3.667%에서 10년 3.983%, 30년 4.076% 로 올라가는 우상향 곡선이다. 30년 할인계수는 0.294383, 30년 뒤 1원이 오늘 약 29.4전이라는 뜻이다. 2년 미만은 가정대로 평평해서 1년과 2년 제로금리가 같다.</p>
+<p><strong>[2] 검산.</strong> 3년 쿠폰 3.736% 채권을 만든 곡선으로 다시 할인하면 정확히 100.000000 이 나온다. 부트스트래핑 곡선은 입력 상품을 오차 없이 재현한다. 이게 곡선을 만들 때 가장 먼저 확인하는 항목이다.</p>
+<p><strong>선도금리의 톱니.</strong> par yield 를 선형보간하면 노드에서 선도금리가 튄다. 4.5~5년 6개월 선도금리는 4.160% 인데 바로 다음 5~5.5년 구간은 3.989% 로 17bp 가량 떨어진다. 제로금리 곡선은 매끄러워 보여도 선도금리는 톱니 모양이 된다. 변동금리 현금흐름을 선도금리로 추정하는 스왑 평가에서는 이 톱니가 그대로 가격에 들어가기 때문에, 실무에서는 선도금리가 매끄럽게 나오는 보간법을 따로 고민한다.</p>
+<p><strong>[3]·[4] 보간 선택의 값.</strong> QuantLib 은 노드 사이를 할인계수의 로그로 선형보간한다(구간 안에서 선도금리가 일정). 노드 만기의 제로금리는 수동 곡선과 거의 같지만(10년 3.983% vs 3.980%), 노드 사이에 있는 7년 쿠폰 4.0% 채권 가격은 100.4723 과 100.3342 로 <strong>액면 100원당 약 0.14원</strong> 차이가 난다. 같은 시장 숫자 6개로 만든 곡선인데 보간만 바꿔서 생긴 차이다. 입력 상품은 둘 다 정확히 맞추니, 이 차이는 "시장이 알려주지 않는 부분에 대한 가정"의 값이라고 보면 된다. 참고로 출력의 QuantLib 선도금리는 1년 구간이라 6개월 구간인 수동 결과와 직접 비교하는 숫자는 아니다.</p>
+<!--card:bars-->
+
+<h2>리스크관리: 키레이트 민감도</h2>
+<p><a href="https://quantlib-diary.blogspot.com/2026/10/3.html">#3</a>의 듀레이션은 곡선 전체가 평행하게 1bp 움직일 때의 가격 변화였다. 곡선을 노드로 만들고 나면 "어느 만기 금리가 움직일 때 얼마나 변하나"로 쪼갤 수 있다. 노드 하나의 par yield 만 1bp 올리고 곡선을 다시 부트스트래핑해서 가격 차이를 보는 방식이 <strong>키레이트(key rate) 민감도</strong>, 버킷 민감도다.</p>
+<p>출력 [5] 를 보면 7년 채권의 민감도는 5년 노드 −0.03661원, 10년 노드 −0.02437원에 거의 다 몰려 있다. 7년 par yield 가 5년과 10년 노드 사이 보간으로만 정해지기 때문이다. 7년이 10년보다 5년에 가까우니 5년 쪽 비중이 더 크다. 2년·3년 노드에 대한 민감도는 0 에 가깝다. 짧은 구간 할인계수가 바뀌어도 7년 par 금리 조건이 그대로라 쿠폰이 par 에 가까운 채권 가격은 거의 안 바뀐다. 노드별 민감도를 모두 더하면 −0.06103원이고 전체 평행 1bp 이동(−0.06101원)과 거의 같다. 평행 이동 민감도가 버킷별로 나뉘는 셈이다. 다만 이 배분 자체가 보간법에 따라 달라진다는 점도 함께 기억해 둔다.</p>
+
+<h2>자주 묻는 질문</h2>
+<h3>Q. 만기수익률 곡선을 그대로 할인에 쓰면 안 되나?</h3>
+<p>만기수익률은 한 채권의 모든 현금흐름을 같은 금리로 할인했을 때 가격을 맞추는 금리다. 3년물의 첫 쿠폰(6개월 뒤)과 마지막 원금(3년 뒤)을 같은 금리로 할인한다는 뜻이라, 다른 채권이나 파생상품 현금흐름에 그대로 가져다 쓸 수 없다. 시점별 할인계수로 바꿔야 어느 상품에나 같은 기준을 적용할 수 있고, 그 변환이 부트스트래핑이다.</p>
+<h3>Q. 2년 미만을 평평하게 둔 건 괜찮나?</h3>
+<p>오늘 예시의 단순화다. 같은 날 짧은 만기 국고채 숫자를 기사에서 확인하지 못해서 2년 금리로 채웠다. 실제 곡선에서는 통안채나 단기 국고채, 금리 스왑 곡선이라면 단기 예금 금리와 선물 금리로 이 구간을 채운다. 짧은 구간 가정이 바뀌면 긴 만기 할인계수도 연쇄적으로 바뀐다는 점이 부트스트래핑의 특징이다.</p>
+<h3>Q. 실무에서는 어떤 보간을 쓰나?</h3>
+<p>정답이 하나로 정해져 있지 않다. 오늘 쓴 par yield 선형보간과 할인계수 log-linear 보간 외에 제로금리 3차 스플라인, 선도금리가 연속이 되도록 만든 방법들도 쓴다. 기준은 보통 세 가지다. 입력 상품을 정확히 맞추는가, 선도금리가 매끄러운가, 노드 하나를 흔들었을 때 먼 구간까지 이상하게 출렁이지 않는가(민감도가 국소적인가).</p>
+<!--card:summary-->
+
+<h2>오늘의 한 줄</h2>
+<p><strong>부트스트래핑은 par 채권 조건을 짧은 만기부터 전진 대입으로 푸는 일이다. 11월 3일 국고채 6개 금리로 만든 곡선은 제로금리 3.667%(2년)~4.076%(30년)였고, 입력 채권은 정확히 재현하지만 노드 사이 7년 채권 가격은 보간 선택에 따라 액면 100원당 0.14원 달라졌다. 다음 일기 #12는 이 곡선으로 이자율 스왑 평가.</strong></p>
+
+<h2>함께 보면 좋은 글</h2>
+<ul>
+<li><a href="https://quantlib-diary.blogspot.com/2026/10/0.html">퀀트 공부 일기 #0 - 파생상품 평가, 전체 그림부터</a></li>
+<li><a href="https://quantlib-diary.blogspot.com/2026/10/1.html">퀀트 공부 일기 #1 - 현재가치와 할인, 할인곡선까지</a></li>
+<li><a href="https://quantlib-diary.blogspot.com/2026/10/3.html">퀀트 공부 일기 #3 - 채권 가격과 듀레이션</a></li>
+</ul>
+
+<h2>참고한 자료</h2>
+<ul>
+<li><a href="https://www.betanews.net/article/view/beta202611030155">베타뉴스 - '외국인 선물 매수' 국고채 금리, 일제히 하락 마감 (2026.11.03, 11월 3일 마감 금리)</a></li>
+<li><a href="https://news.jkn.co.kr/post/1065808">재경일보 - 국고채 금리 일제히 상승…3년물 연 3.740% (2026.11.02, 전일 금리 대조용)</a></li>
+<li><a href="https://ecos.bok.or.kr/">한국은행 경제통계시스템(ECOS) - 시장금리(일별)</a></li>
+<li><a href="https://www.quantlib.org/">QuantLib 공식 사이트</a></li>
+</ul>
