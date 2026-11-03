@@ -2,9 +2,11 @@
 title: 퀀트 공부 일기 #11 - 수익률곡선 부트스트래핑
 labels: 퀀트 공부 일기, 금융공학, 수익률곡선
 ---
+<span data-cards-built=""></span>
+<div style="text-align:center;margin:28px 0"><img src="https://raw.githubusercontent.com/kcy19981201-create/autoblog/main/images/2026-11-04-quant-diary-11-yield-curve-bootstrapping/cover.png" alt="퀀트 공부 일기 #11 - 수익률곡선 부트스트래핑 - QUANT DIARY #11" style="width:100%;max-width:640px;border-radius:18px" /></div>
 <p><strong>2026년 11월 4일.</strong></p>
 <p>파생상품이든 채권이든 평가의 첫 줄은 "미래 현금흐름을 오늘 가치로 할인한다"다. 그러려면 1년 뒤, 3.5년 뒤, 7년 뒤 1원의 가치, 즉 <strong>모든 시점의 할인계수</strong>가 필요하다. 그런데 시장이 보여주는 건 2년, 3년, 5년, 10년물 국고채의 만기수익률 몇 개뿐이다. 이 몇 개의 숫자에서 연속된 할인곡선을 뽑아내는 작업이 <strong>부트스트래핑(bootstrapping)</strong>이다. <a href="https://quantlib-diary.blogspot.com/2026/10/1.html">#1</a>에서 할인곡선이 무엇인지 봤다면, 오늘은 그걸 실제 시장 금리로 만드는 방법이다. 전체 지도는 <a href="https://quantlib-diary.blogspot.com/2026/10/0.html">#0 프롤로그</a>에 있다.</p>
-<!--card:idea-->
+<div style="text-align:center;margin:28px 0"><img src="https://raw.githubusercontent.com/kcy19981201-create/autoblog/main/images/2026-11-04-quant-diary-11-yield-curve-bootstrapping/idea.png" alt="퀀트 공부 일기 #11 - 수익률곡선 부트스트래핑 - KEY IDEA" style="width:100%;max-width:640px;border-radius:18px" /></div>
 
 <h2>직관: 짧은 만기부터 한 칸씩</h2>
 <p>2년 만기 이표채는 6개월마다 쿠폰을 주고 만기에 액면을 준다. 가격을 알고 있고, 2년 안쪽 할인계수를 이미 알고 있다면 모르는 건 "2년 시점 할인계수" 하나뿐이다. 방정식 하나에 미지수 하나라서 바로 풀린다. 다음으로 3년물을 보면 2년까지의 할인계수는 방금 구했으니 또 미지수가 하나만 남는다. 이렇게 짧은 만기에서 긴 만기로 할인계수를 하나씩 확정해 나간다. 앞에서 구한 값을 발판 삼아 다음 값을 구한다고 해서 부트스트래핑이라고 부른다.</p>
@@ -29,7 +31,7 @@ labels: 퀀트 공부 일기, 금융공학, 수익률곡선
 <p>제로금리는 "오늘부터 t 까지" 평균 금리이고, 선도금리는 "그 구간에서만" 적용되는 금리다. 제로금리는 선도금리의 시간 평균이라서, 곡선이 조금만 울퉁불퉁해도 선도금리에서는 크게 드러난다.</p>
 <h3>선형대수로 보면: 하삼각 연립방정식</h3>
 <p>채권 n 개의 가격 조건을 한꺼번에 쓰면 행렬식 C·D = 1 이 된다. C 의 n 번째 행은 n 번째 채권의 현금흐름(앞쪽은 쿠폰 c_n/2, n 번째 칸은 1 + c_n/2, 그 뒤는 0)이다. 만기 n 인 채권은 t_n 이후에 현금흐름이 없으니 대각선 위쪽이 모두 0 인 <strong>하삼각행렬</strong>이다. 하삼각 연립방정식은 첫 행부터 한 미지수씩 풀어 내려가는 <strong>전진 대입(forward substitution)</strong>으로 풀리고, 위 둘째 줄 식이 바로 그 한 단계다. 역행렬을 따로 구할 필요가 없고 계산량도 n² 정도라 빠르다. 시장 상품이 반기 격자마다 다 있지 않으니, 비어 있는 행은 보간으로 만든 가상의 par 채권으로 채운다.</p>
-<!--card:compare-->
+<div style="text-align:center;margin:28px 0"><img src="https://raw.githubusercontent.com/kcy19981201-create/autoblog/main/images/2026-11-04-quant-diary-11-yield-curve-bootstrapping/compare.png" alt="퀀트 공부 일기 #11 - 수익률곡선 부트스트래핑 - INTERPOLATION" style="width:100%;max-width:640px;border-radius:18px" /></div>
 
 <h2>파이썬과 QuantLib으로 확인</h2>
 <p>할 일은 다섯 가지다. (1) par yield 를 반기 격자에 선형보간하고 전진 대입으로 할인계수를 구한다. (2) 3년 par 채권을 다시 가격 매겨 100 이 나오는지 검산한다. (3) 같은 채권 6개로 QuantLib 의 piecewise 부트스트래핑(할인계수 log-linear 보간)을 돌린다. (4) 두 곡선으로 7년 만기 쿠폰 4.0% 채권을 평가한다. (5) 노드별 1bp 민감도를 본다.</p>
@@ -150,7 +152,7 @@ print(f"6M fwd 5.0~5.5y: {fwd[np.where(np.isclose(grid,5.5))[0][0]]*100:.3f}, 4.
 <p><strong>[2] 검산.</strong> 3년 쿠폰 3.736% 채권을 만든 곡선으로 다시 할인하면 정확히 100.000000 이 나온다. 부트스트래핑 곡선은 입력 상품을 오차 없이 재현한다. 이게 곡선을 만들 때 가장 먼저 확인하는 항목이다.</p>
 <p><strong>선도금리의 톱니.</strong> par yield 를 선형보간하면 노드에서 선도금리가 튄다. 4.5~5년 6개월 선도금리는 4.160% 인데 바로 다음 5~5.5년 구간은 3.989% 로 17bp 가량 떨어진다. 제로금리 곡선은 매끄러워 보여도 선도금리는 톱니 모양이 된다. 변동금리 현금흐름을 선도금리로 추정하는 스왑 평가에서는 이 톱니가 그대로 가격에 들어가기 때문에, 실무에서는 선도금리가 매끄럽게 나오는 보간법을 따로 고민한다.</p>
 <p><strong>[3]·[4] 보간 선택의 값.</strong> QuantLib 은 노드 사이를 할인계수의 로그로 선형보간한다(구간 안에서 선도금리가 일정). 노드 만기의 제로금리는 수동 곡선과 거의 같지만(10년 3.983% vs 3.980%), 노드 사이에 있는 7년 쿠폰 4.0% 채권 가격은 100.4723 과 100.3342 로 <strong>액면 100원당 약 0.14원</strong> 차이가 난다. 같은 시장 숫자 6개로 만든 곡선인데 보간만 바꿔서 생긴 차이다. 입력 상품은 둘 다 정확히 맞추니, 이 차이는 "시장이 알려주지 않는 부분에 대한 가정"의 값이라고 보면 된다. 참고로 출력의 QuantLib 선도금리는 1년 구간이라 6개월 구간인 수동 결과와 직접 비교하는 숫자는 아니다.</p>
-<!--card:bars-->
+<div style="text-align:center;margin:28px 0"><img src="https://raw.githubusercontent.com/kcy19981201-create/autoblog/main/images/2026-11-04-quant-diary-11-yield-curve-bootstrapping/bars.png" alt="퀀트 공부 일기 #11 - 수익률곡선 부트스트래핑 - KEY RATE" style="width:100%;max-width:640px;border-radius:18px" /></div>
 
 <h2>리스크관리: 키레이트 민감도</h2>
 <p><a href="https://quantlib-diary.blogspot.com/2026/10/3.html">#3</a>의 듀레이션은 곡선 전체가 평행하게 1bp 움직일 때의 가격 변화였다. 곡선을 노드로 만들고 나면 "어느 만기 금리가 움직일 때 얼마나 변하나"로 쪼갤 수 있다. 노드 하나의 par yield 만 1bp 올리고 곡선을 다시 부트스트래핑해서 가격 차이를 보는 방식이 <strong>키레이트(key rate) 민감도</strong>, 버킷 민감도다.</p>
@@ -163,7 +165,7 @@ print(f"6M fwd 5.0~5.5y: {fwd[np.where(np.isclose(grid,5.5))[0][0]]*100:.3f}, 4.
 <p>오늘 예시의 단순화다. 같은 날 짧은 만기 국고채 숫자를 기사에서 확인하지 못해서 2년 금리로 채웠다. 실제 곡선에서는 통안채나 단기 국고채, 금리 스왑 곡선이라면 단기 예금 금리와 선물 금리로 이 구간을 채운다. 짧은 구간 가정이 바뀌면 긴 만기 할인계수도 연쇄적으로 바뀐다는 점이 부트스트래핑의 특징이다.</p>
 <h3>Q. 실무에서는 어떤 보간을 쓰나?</h3>
 <p>정답이 하나로 정해져 있지 않다. 오늘 쓴 par yield 선형보간과 할인계수 log-linear 보간 외에 제로금리 3차 스플라인, 선도금리가 연속이 되도록 만든 방법들도 쓴다. 기준은 보통 세 가지다. 입력 상품을 정확히 맞추는가, 선도금리가 매끄러운가, 노드 하나를 흔들었을 때 먼 구간까지 이상하게 출렁이지 않는가(민감도가 국소적인가).</p>
-<!--card:summary-->
+<div style="text-align:center;margin:28px 0"><img src="https://raw.githubusercontent.com/kcy19981201-create/autoblog/main/images/2026-11-04-quant-diary-11-yield-curve-bootstrapping/summary.png" alt="퀀트 공부 일기 #11 - 수익률곡선 부트스트래핑 - SUMMARY" style="width:100%;max-width:640px;border-radius:18px" /></div>
 
 <h2>오늘의 한 줄</h2>
 <p><strong>부트스트래핑은 par 채권 조건을 짧은 만기부터 전진 대입으로 푸는 일이다. 11월 3일 국고채 6개 금리로 만든 곡선은 제로금리 3.667%(2년)~4.076%(30년)였고, 입력 채권은 정확히 재현하지만 노드 사이 7년 채권 가격은 보간 선택에 따라 액면 100원당 0.14원 달라졌다. 다음 일기 #12는 이 곡선으로 이자율 스왑 평가.</strong></p>
