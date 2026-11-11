@@ -1,0 +1,179 @@
+---
+title: 퀀트 공부 일기 #12 - 이자율 스왑 평가
+labels: 퀀트 공부 일기, 금융공학, 이자율 스왑
+---
+<p><strong>2026년 11월 12일.</strong></p>
+<p>이자율 스왑(IRS)은 두 사람이 같은 명목원금에 대해 한쪽은 고정금리 이자를, 다른 쪽은 변동금리 이자를 주고받기로 한 계약이다. 원화 스왑이라면 변동금리는 보통 CD 91일물 금리이고, 3개월마다 이자를 교환한다. 원금은 오가지 않는다. 평가 방법은 결국 <a href="https://quantlib-diary.blogspot.com/2026/11/11_0480610742.html">#11</a>에서 만든 할인곡선으로 두 다리(leg)의 현재가치를 각각 구해 빼는 것이다. 오늘은 그 과정을 실제 숫자로 끝까지 따라가 본다. 전체 지도는 <a href="https://quantlib-diary.blogspot.com/2026/10/0.html">#0 프롤로그</a>에 있다.</p>
+<!--card:idea-->
+
+<h2>직관: 고정 다리와 변동 다리</h2>
+<p>고정금리를 내고 변동금리를 받는 쪽을 <strong>고정 지급자(payer)</strong>, 반대를 <strong>고정 수취자(receiver)</strong>라고 부른다. 고정 다리는 쉽다. 금리가 정해져 있으니 분기마다 받을 이자가 이미 다 보이고, 할인계수만 곱해서 더하면 된다. 어려운 건 변동 다리다. 1년 뒤 CD 금리가 얼마일지 아무도 모르는데 그 이자의 오늘 가치를 어떻게 매길까.</p>
+<p>답은 <a href="https://quantlib-diary.blogspot.com/2026/10/2.html">#2 무차익거래</a>에 있다. 할인곡선이 있으면 "3개월 뒤부터 6개월 뒤까지 빌리는 금리"를 오늘 고정할 수 있다. 이게 선도금리다. 변동 이자를 선도금리로 바꿔 놓으면 변동 다리도 확정된 현금흐름처럼 할인할 수 있다. 미래 금리를 예측하는 게 아니라 오늘 헤지로 고정할 수 있는 금리를 쓰는 것이다.</p>
+
+<h2>예시 숫자: 2026년 11월 9일 시장 금리</h2>
+<p>11월 9일 서울 채권시장 마감 금리(금융투자협회 기준, 핀포인트뉴스 보도)는 아래와 같다. 전 구간 1~3bp 상승한 날이다.</p>
+<table>
+<tr><th>만기</th><th>CD 91일</th><th>1년</th><th>2년</th><th>3년</th><th>5년</th><th>10년</th></tr>
+<tr><td>금리(연 %)</td><td>3.360</td><td>3.568</td><td>3.629</td><td>3.639</td><td>3.731</td><td>3.863</td></tr>
+<tr><td>전일 대비</td><td>+2.0bp</td><td>+1.7bp</td><td>+2.8bp</td><td>+2.6bp</td><td>+1.4bp</td><td>+1.0bp</td></tr>
+</table>
+<p>1년 이상은 국고채 금리다. 원래 스왑 평가에는 시장의 IRS 호가로 곡선을 만들어야 하는데, 같은 날 IRS 호가를 공개 자료에서 확인하지 못했다. 그래서 오늘 예시는 <strong>국고채 금리를 분기 지급 스왑의 par 금리 자리에 넣는다고 가정</strong>한다. 실제 IRS 금리는 국고채 금리와 차이(스왑 스프레드)가 있으니 숫자 자체보다 계산 구조를 보는 용도다. 또 하나의 가정은 할인과 선도금리 추정에 같은 곡선 하나를 쓰는 <strong>단일 곡선</strong> 방식이다.</p>
+<p>평가할 거래는 이렇다. 명목원금 10억원, 남은 만기 3년, 분기마다 교환, 내가 <strong>고정 연 3.20%를 내고 CD를 받는</strong> 스왑. 금리가 지금보다 낮을 때 맺어 둔 거래라고 보면 된다.</p>
+
+<h2>수식: 변동 다리는 1 − D(T)</h2>
+<p>분기 시점 t_1, …, t_n, 구간 길이 δ(여기서는 0.25), 할인계수 D_i 라 하자. 구간 i 의 선도금리는</p>
+<pre><code>F_i = (D_(i−1) / D_i − 1) / δ</code></pre>
+<p>이고, 변동 다리 현재가치는 원금 1 당</p>
+<pre><code>PV_float = Σ δ·F_i·D_i = Σ (D_(i−1) − D_i) = D_0 − D_n = 1 − D(t_n)</code></pre>
+<p>가 된다. 합이 앞뒤로 지워지는 망원(telescoping) 합이다. 해석도 깔끔하다. 변동금리 이자에 마지막 원금 1 을 붙이면 매 분기 시장금리로 굴러가는 변동금리 채권이 되고, 그 가격은 지급일마다 액면 1 로 돌아온다. 그러니 변동 다리 가치는 "오늘 1 − 만기에 받을 원금 1 의 현재가치"다.</p>
+<p>고정 다리는 연금계수 A = Σ δ·D_i 를 쓰면 K·A 다. 두 다리 가치가 같아지는 고정금리가 <strong>par 스왑 금리</strong>이고, 이미 맺은 스왑의 가치는 그 차이로 정리된다.</p>
+<pre><code>S = (1 − D(t_n)) / A
+V_payer = N·(PV_float − K·A) = N·(S − K)·A</code></pre>
+<p>마지막 식이 오늘의 핵심이다. 기존 스왑의 가치는 "지금 시장 스왑 금리와 계약 금리의 차이 × 남은 기간의 연금계수"다. 금리 차이를 남은 기간 동안 매년 받는 연금으로 바꿔 생각하면 된다.</p>
+<!--card:compare-->
+
+<h2>파이썬과 QuantLib으로 확인</h2>
+<p>할 일은 네 가지다. (1) #11과 같은 방식으로 분기 격자 할인계수를 부트스트래핑하고 3개월 선도금리를 본다. (2) 변동 다리를 선도금리 합과 1 − D(3y) 두 방법으로 구해 같은지 확인하고 스왑 가치를 계산한다. (3) 평행 이동과 노드별 1bp 민감도를 본다. (4) QuantLib 에 CD3M 지수와 한국 달력을 넣어 같은 스왑을 평가한다.</p>
+<pre><code>import numpy as np
+import QuantLib as ql
+
+# 2026-11-09 서울 채권시장 마감(금투협): CD 91일물 + 국고채 금리(%)
+# 가정: 국고채 금리를 분기 이표 par 금리(=스왑 금리 자리)로 사용
+mkt = {0.25: 3.360, 1: 3.568, 2: 3.629, 3: 3.639, 5: 3.731, 10: 3.863}
+T = np.array(list(mkt)); Y = np.array(list(mkt.values()))/100
+grid = np.arange(0.25, 10.001, 0.25); dt = 0.25
+
+def build(Yv):
+    par = np.interp(grid, T, Yv)
+    d = np.zeros(len(grid))
+    for n in range(len(grid)):
+        c = par[n]*dt
+        d[n] = (1 - c*d[:n].sum())/(1 + c)
+    return d
+
+N = 1_000_000_000      # 명목원금 10억원
+K = 0.0320             # 기존 스왑 고정금리 3.20%
+n3 = int(round(3/dt))  # 3년 = 12분기
+
+def swap(d, K):
+    A = dt*d[:n3].sum()                 # 고정 다리 연금계수
+    flt = 1 - d[n3-1]                   # 변동 다리 PV(원금 1당)
+    S = flt/A                           # 스왑 par 금리
+    return A, flt, S, N*(flt - K*A)     # 고정 지급(payer) 가치
+
+D = build(Y)
+fwd = (np.r_[1, D[:-1]]/D - 1)/dt
+print(&quot;[1] 3개월 선도금리(변동 다리 예상 CD, 단리 %)&quot;)
+for i in [0, 1, 3, 7, 11]:
+    print(f&quot;  {grid[i]-dt:4.2f}~{grid[i]:4.2f}y: {fwd[i]*100:.3f}&quot;)
+
+A, flt, S, V = swap(D, K)
+fixed_pv = N*K*A; float_pv = N*flt
+print(f&quot;\n[2] 3년 스왑, 명목 10억, 분기 지급&quot;)
+print(f&quot;  연금계수 A = {A:.6f}&quot;)
+print(f&quot;  변동 다리 PV = {float_pv:,.0f}원  (= N·(1-D(3y)), D(3y)={D[n3-1]:.6f})&quot;)
+print(f&quot;  변동 다리 PV(선도금리 합) = {N*dt*(fwd[:n3]*D[:n3]).sum():,.0f}원&quot;)
+print(f&quot;  par 스왑 금리 = {S*100:.4f}%&quot;)
+print(f&quot;  고정 3.20% 다리 PV = {fixed_pv:,.0f}원&quot;)
+print(f&quot;  고정 지급자 가치 = {V:,.0f}원  (= N·(S-K)·A = {N*(S-K)*A:,.0f})&quot;)
+
+# 민감도
+_,_,_,Vup = swap(build(Y+0.0001), K)
+print(f&quot;\n[3] 전체 +1bp 평행 이동: 고정 지급자 가치 변화 {Vup-V:+,.0f}원&quot;)
+print(&quot;  노드별 +1bp:&quot;)
+tot=0
+for k,t in enumerate(T):
+    Yb=Y.copy(); Yb[k]+=0.0001
+    _,_,_,Vb=swap(build(Yb),K); tot+=Vb-V
+    print(f&quot;   {t:5.2f}y: {Vb-V:+,.0f}원&quot;)
+print(f&quot;   합계: {tot:+,.0f}원&quot;)
+
+# QuantLib
+today = ql.Date(9, 11, 2026); ql.Settings.instance().evaluationDate = today
+cal = ql.SouthKorea(); dc = ql.Actual365Fixed()
+h = ql.RelinkableYieldTermStructureHandle()
+cd = ql.IborIndex(&quot;CD3M&quot;, ql.Period(3, ql.Months), 1, ql.KRWCurrency(), cal,
+                  ql.ModifiedFollowing, False, dc, h)
+helpers = [ql.DepositRateHelper(ql.QuoteHandle(ql.SimpleQuote(0.0336)), ql.Period(3, ql.Months), 1, cal, ql.ModifiedFollowing, False, dc)]
+for t, y in list(mkt.items())[1:]:
+    helpers.append(ql.SwapRateHelper(ql.QuoteHandle(ql.SimpleQuote(y/100)), ql.Period(int(t), ql.Years),
+                                     cal, ql.Quarterly, ql.ModifiedFollowing, dc, cd))
+curve = ql.PiecewiseLogLinearDiscount(today, helpers, dc); curve.enableExtrapolation()
+h.linkTo(curve)
+start = cal.advance(today, 1, ql.Days); end = cal.advance(start, ql.Period(3, ql.Years))
+sch = ql.Schedule(start, end, ql.Period(ql.Quarterly), cal, ql.ModifiedFollowing, ql.ModifiedFollowing, ql.DateGeneration.Forward, False)
+sw = ql.VanillaSwap(ql.Swap.Payer, N, sch, K, dc, sch, cd, 0.0, dc)
+sw.setPricingEngine(ql.DiscountingSwapEngine(h))
+print(f&quot;\n[4] QuantLib (CD3M 지수, 한국 달력, Act/365)&quot;)
+print(f&quot;  par 스왑 금리 = {sw.fairRate()*100:.4f}%&quot;)
+print(f&quot;  고정 다리 PV = {sw.fixedLegNPV():,.0f}, 변동 다리 PV = {sw.floatingLegNPV():,.0f}&quot;)
+print(f&quot;  고정 지급자 가치 = {sw.NPV():,.0f}원&quot;)
+print(f&quot;  BPS(고정 다리 1bp) = {sw.fixedLegBPS():,.0f}원&quot;)</code></pre>
+<p>출력(QuantLib 1.44):</p>
+<pre><code>[1] 3개월 선도금리(변동 다리 예상 CD, 단리 %)
+  0.00~0.25y: 3.360
+  0.25~0.50y: 3.499
+  0.75~1.00y: 3.780
+  1.75~2.00y: 3.740
+  2.75~3.00y: 3.668
+
+[2] 3년 스왑, 명목 10억, 분기 지급
+  연금계수 A = 2.831193
+  변동 다리 PV = 103,027,121원  (= N·(1-D(3y)), D(3y)=0.896973)
+  변동 다리 PV(선도금리 합) = 103,027,121원
+  par 스왑 금리 = 3.6390%
+  고정 3.20% 다리 PV = 90,598,183원
+  고정 지급자 가치 = 12,428,938원  (= N·(S-K)·A = 12,428,938)
+
+[3] 전체 +1bp 평행 이동: 고정 지급자 가치 변화 +281,106원
+  노드별 +1bp:
+    0.25y: -82원
+    1.00y: -377원
+    2.00y: -808원
+    3.00y: +282,401원
+    5.00y: +0원
+   10.00y: +0원
+   합계: +281,134원
+
+[4] QuantLib (CD3M 지수, 한국 달력, Act/365)
+  par 스왑 금리 = 3.6390%
+  고정 다리 PV = -90,815,139, 변동 다리 PV = 103,273,841
+  고정 지급자 가치 = 12,458,702원
+  BPS(고정 다리 1bp) = -283,797원</code></pre>
+
+<h2>결과 읽기</h2>
+<p><strong>[1] 변동 다리의 예상 CD.</strong> 첫 구간 선도금리는 입력한 CD 3.360% 그대로이고, 이후 3.499%, 3.780% 로 올라간다. 1년 시점 근처에서 3.78% 까지 올랐다가 2~3년 구간에서 3.74%, 3.67% 로 다시 내려온다. 시장이 금리 상승을 예상해서라기보다 1년 안쪽에서 CD(3.36%)와 1년 국고채(3.568%) 사이를 par 금리 선형보간으로 이은 결과가 크다. #11에서 본 "선도금리 톱니"가 스왑 변동 다리에 그대로 들어간다는 걸 숫자로 확인한 셈이다.</p>
+<p><strong>[2] 두 다리의 가치.</strong> 변동 다리 현재가치는 선도금리로 하나씩 할인해 더해도, 1 − D(3y) 로 한 번에 계산해도 103,027,121원으로 같다. 3년 할인계수는 0.896973 이다. par 스왑 금리는 3.6390% 로 3년 입력 금리와 정확히 같은데, 3년 par 금리를 넣어 곡선을 만들었으니 당연한 검산이다. 고정 3.20% 다리는 90,598,183원이라 고정 지급자 입장의 가치는 <strong>약 1,243만원</strong>이다. (3.639% − 3.20%) × 2.831193 × 10억으로 계산해도 같은 값이 나온다. 계약 이후 금리가 올라서, 낮은 고정금리를 내기로 한 쪽이 이득을 보고 있는 상황이다.</p>
+<p><strong>[4] QuantLib.</strong> 실제 영업일과 Act/365 일수 계산을 넣은 QuantLib 결과는 1,245.9만원으로 수동 계산과 약 3만원 차이다. 날짜 계산 차이다. QuantLib 은 받는 다리를 +, 내는 다리를 − 로 표시해서 고정 다리 PV 가 음수로 나온다.</p>
+<!--card:bars-->
+
+<h2>리스크관리: 스왑의 DV01</h2>
+<p>금리가 전 구간 1bp 오르면 고정 지급자의 가치는 281,106원 늘어난다. 근사식으로는 N·A·1bp = 10억 × 2.831193 × 0.0001 ≈ 283,119원인데, 실제 값이 조금 작은 건 금리가 오르면 할인계수가 줄어 연금계수 A 도 같이 줄기 때문이다. QuantLib 의 고정 다리 BPS(−283,797원)는 할인곡선은 그대로 두고 고정금리만 1bp 바꾼 값이라 근사식 쪽에 가깝다. 고정 지급 스왑은 금리가 오를 때 이득이니, <a href="https://quantlib-diary.blogspot.com/2026/10/3.html">#3</a>의 채권과 부호가 반대다. 그래서 고정금리 채권을 들고 있는 쪽이 금리 위험을 줄이려 고정 지급 스왑을 쓴다.</p>
+<p>노드별로 보면 민감도는 3년 노드에 +282,401원으로 거의 다 몰려 있고, 짧은 노드는 −82원 ~ −808원으로 작고 부호도 반대다. 3년 par 스왑 금리 S 는 3년 노드 입력값으로 정해지니 S 를 움직이는 건 3년 노드뿐이다. 짧은 노드는 S 는 그대로 두고 할인계수만 조금 낮춰 A 를 줄이는데, 가치가 (S − K)·A 라서 이미 이득인 스왑의 이득이 약간 줄어든다. 노드별 합(+281,134원)은 평행 이동(+281,106원)과 거의 같다.</p>
+
+<h2>자주 묻는 질문</h2>
+<h3>Q. 스왑을 맺는 날 가치가 0 인 이유는?</h3>
+<p>보통 그날의 par 스왑 금리로 계약하기 때문이다. S = K 면 V = N·(S − K)·A = 0 이다. 그 뒤 시장 금리가 움직이면 S 가 바뀌면서 한쪽이 이득, 다른 쪽이 손해가 되고, 그게 평가손익이다. 실제로는 딜러가 호가 차이만큼 마진을 붙인다.</p>
+<h3>Q. 단일 곡선 가정은 실무에서도 쓰나?</h3>
+<p>2008년 이후 대부분의 시장은 선도금리를 추정하는 곡선(지표금리 곡선)과 할인에 쓰는 곡선(담보 금리 기준 곡선)을 나누는 다중 곡선 방식을 쓴다. 그러면 1 − D(T) 망원 합이 더 이상 성립하지 않고, 선도금리를 하나씩 할인해야 한다. 오늘 코드의 [2] 에서 선도금리 합으로 따로 계산해 본 것도 그 때문이다. 구조는 같고 곡선이 두 개가 될 뿐이다.</p>
+<h3>Q. 국고채 금리를 그대로 스왑 금리로 써도 되나?</h3>
+<p>안 된다. 오늘은 같은 날 IRS 호가를 확인하지 못해서 둔 가정이다. 스왑 금리와 국고채 금리의 차이(스왑 스프레드)는 수급과 신용, 자금 조달 여건에 따라 움직이고 0 이 아니다. 실제 평가에서는 CD 와 IRS 호가로 곡선을 따로 만든다. 계산 순서는 오늘과 같다.</p>
+<!--card:summary-->
+
+<h2>오늘의 한 줄</h2>
+<p><strong>스왑 가치는 두 다리 현재가치의 차이이고, 단일 곡선에서 변동 다리는 1 − D(T) 로 접힌다. 11월 9일 금리(국고채를 스왑 금리로 가정)로 보면 3년 par 스왑 금리는 3.639%, 고정 3.20%를 내는 10억짜리 스왑의 가치는 약 1,243만원, DV01 은 약 28만원이었다. 다음 일기 #13은 변동성 스마일과 내재변동성.</strong></p>
+
+<h2>함께 보면 좋은 글</h2>
+<ul>
+<li><a href="https://quantlib-diary.blogspot.com/2026/10/0.html">퀀트 공부 일기 #0 - 파생상품 평가, 전체 그림부터</a></li>
+<li><a href="https://quantlib-diary.blogspot.com/2026/11/11_0480610742.html">퀀트 공부 일기 #11 - 수익률곡선 부트스트래핑</a></li>
+<li><a href="https://quantlib-diary.blogspot.com/2026/10/2.html">퀀트 공부 일기 #2 - 무차익거래와 선도가격</a></li>
+</ul>
+
+<h2>참고한 자료</h2>
+<ul>
+<li><a href="https://www.pinpointnews.co.kr/news/articleView.html?idxno=502508">핀포인트뉴스 - 국고채부터 회사채까지 금리 상승… CD 91일물도 올라 (2026.11.09, 11월 9일 마감 금리)</a></li>
+<li><a href="https://www.kofiabond.or.kr/">금융투자협회 채권정보센터</a></li>
+<li><a href="https://ecos.bok.or.kr/">한국은행 경제통계시스템(ECOS) - 시장금리(일별)</a></li>
+<li><a href="https://www.quantlib.org/">QuantLib 공식 사이트</a></li>
+</ul>

@@ -1,0 +1,42 @@
+{
+ "style": "pro",
+ "theme": "navy",
+ "cards": [
+  {"name": "cover", "type": "cover", "tag": "QUANT DIARY #12",
+   "title": "이자율 스왑\n**평가**",
+   "subtitle": "고정 다리와 변동 다리, 할인곡선 하나로 값을 매기는 법",
+   "chips": ["Interest Rate Swap", "Par Swap Rate", "DV01"]},
+  {"name": "idea", "type": "points", "tag": "KEY IDEA",
+   "title": "두 다리의 현재가치 차이",
+   "points": [
+    {"t": "고정 다리", "d": "정해진 이자를 할인해 더한다: K·A"},
+    {"t": "변동 다리", "d": "선도금리로 바꿔 할인한다"},
+    {"t": "망원 합", "d": "단일 곡선이면 1 − D(T) 로 접힌다"},
+    {"t": "기존 스왑 가치", "d": "N·(S − K)·A, 금리 차이 × 연금계수"}
+   ]},
+  {"name": "compare", "type": "compare", "tag": "LEGS",
+   "title": "3년 스왑, 명목 10억원",
+   "headers": ["항목", "값", "비고"],
+   "rows": [
+    ["변동 다리 PV", "1억302.7만", "1 − D(3y)"],
+    ["고정 3.20% PV", "9,059.8만", "K·A"],
+    ["par 스왑 금리", "3.6390%", "3년 입력값"],
+    ["고정 지급자 가치", "약 1,243만", "(S−K)·A·N"]
+   ],
+   "tip": "2026-11-09 마감 금리, 국고채를 스왑 금리로 가정"},
+  {"name": "bars", "type": "bars", "tag": "SENSITIVITY",
+   "title": "+1bp 시 고정 지급자 가치 변화",
+   "items": [
+    {"label": "3년 노드", "value": 282401, "display": "+282,401원"},
+    {"label": "2년 노드", "value": 808, "display": "−808원"},
+    {"label": "평행 이동", "value": 281106, "display": "+281,106원"},
+    {"label": "근사 N·A·1bp", "value": 283119, "display": "약 283,119원"}
+   ],
+   "takeaway": "par 금리를 정하는 3년 노드에 민감도가 몰린다",
+   "note": "* 명목 10억원, 분기 지급, 단일 곡선, par 금리 선형보간 가정"},
+  {"name": "summary", "type": "check", "tag": "SUMMARY",
+   "title": "스왑 평가 정리",
+   "items": ["F_i = (D_(i−1)/D_i − 1)/δ", "변동 다리 = 1 − D(T)", "S = (1 − D(T)) / A", "3.20% 지급 스왑 가치 약 1,243만원", "DV01 약 28만원, 채권과 부호 반대"],
+   "tip": "다음 일기: 변동성 스마일과 내재변동성"}
+ ]
+}
