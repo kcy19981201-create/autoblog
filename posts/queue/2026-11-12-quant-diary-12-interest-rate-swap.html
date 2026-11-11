@@ -2,9 +2,11 @@
 title: 퀀트 공부 일기 #12 - 이자율 스왑 평가
 labels: 퀀트 공부 일기, 금융공학, 이자율 스왑
 ---
+<span data-cards-built=""></span>
+<div style="text-align:center;margin:28px 0"><img src="https://raw.githubusercontent.com/kcy19981201-create/autoblog/main/images/2026-11-12-quant-diary-12-interest-rate-swap/cover.png" alt="퀀트 공부 일기 #12 - 이자율 스왑 평가 - QUANT DIARY #12" style="width:100%;max-width:640px;border-radius:18px" /></div>
 <p><strong>2026년 11월 12일.</strong></p>
 <p>이자율 스왑(IRS)은 두 사람이 같은 명목원금에 대해 한쪽은 고정금리 이자를, 다른 쪽은 변동금리 이자를 주고받기로 한 계약이다. 원화 스왑이라면 변동금리는 보통 CD 91일물 금리이고, 3개월마다 이자를 교환한다. 원금은 오가지 않는다. 평가 방법은 결국 <a href="https://quantlib-diary.blogspot.com/2026/11/11_0480610742.html">#11</a>에서 만든 할인곡선으로 두 다리(leg)의 현재가치를 각각 구해 빼는 것이다. 오늘은 그 과정을 실제 숫자로 끝까지 따라가 본다. 전체 지도는 <a href="https://quantlib-diary.blogspot.com/2026/10/0.html">#0 프롤로그</a>에 있다.</p>
-<!--card:idea-->
+<div style="text-align:center;margin:28px 0"><img src="https://raw.githubusercontent.com/kcy19981201-create/autoblog/main/images/2026-11-12-quant-diary-12-interest-rate-swap/idea.png" alt="퀀트 공부 일기 #12 - 이자율 스왑 평가 - KEY IDEA" style="width:100%;max-width:640px;border-radius:18px" /></div>
 
 <h2>직관: 고정 다리와 변동 다리</h2>
 <p>고정금리를 내고 변동금리를 받는 쪽을 <strong>고정 지급자(payer)</strong>, 반대를 <strong>고정 수취자(receiver)</strong>라고 부른다. 고정 다리는 쉽다. 금리가 정해져 있으니 분기마다 받을 이자가 이미 다 보이고, 할인계수만 곱해서 더하면 된다. 어려운 건 변동 다리다. 1년 뒤 CD 금리가 얼마일지 아무도 모르는데 그 이자의 오늘 가치를 어떻게 매길까.</p>
@@ -30,7 +32,7 @@ labels: 퀀트 공부 일기, 금융공학, 이자율 스왑
 <pre><code>S = (1 − D(t_n)) / A
 V_payer = N·(PV_float − K·A) = N·(S − K)·A</code></pre>
 <p>마지막 식이 오늘의 핵심이다. 기존 스왑의 가치는 "지금 시장 스왑 금리와 계약 금리의 차이 × 남은 기간의 연금계수"다. 금리 차이를 남은 기간 동안 매년 받는 연금으로 바꿔 생각하면 된다.</p>
-<!--card:compare-->
+<div style="text-align:center;margin:28px 0"><img src="https://raw.githubusercontent.com/kcy19981201-create/autoblog/main/images/2026-11-12-quant-diary-12-interest-rate-swap/compare.png" alt="퀀트 공부 일기 #12 - 이자율 스왑 평가 - LEGS" style="width:100%;max-width:640px;border-radius:18px" /></div>
 
 <h2>파이썬과 QuantLib으로 확인</h2>
 <p>할 일은 네 가지다. (1) #11과 같은 방식으로 분기 격자 할인계수를 부트스트래핑하고 3개월 선도금리를 본다. (2) 변동 다리를 선도금리 합과 1 − D(3y) 두 방법으로 구해 같은지 확인하고 스왑 가치를 계산한다. (3) 평행 이동과 노드별 1bp 민감도를 본다. (4) QuantLib 에 CD3M 지수와 한국 달력을 넣어 같은 스왑을 평가한다.</p>
@@ -145,7 +147,7 @@ print(f&quot;  BPS(고정 다리 1bp) = {sw.fixedLegBPS():,.0f}원&quot;)</code>
 <p><strong>[1] 변동 다리의 예상 CD.</strong> 첫 구간 선도금리는 입력한 CD 3.360% 그대로이고, 이후 3.499%, 3.780% 로 올라간다. 1년 시점 근처에서 3.78% 까지 올랐다가 2~3년 구간에서 3.74%, 3.67% 로 다시 내려온다. 시장이 금리 상승을 예상해서라기보다 1년 안쪽에서 CD(3.36%)와 1년 국고채(3.568%) 사이를 par 금리 선형보간으로 이은 결과가 크다. #11에서 본 "선도금리 톱니"가 스왑 변동 다리에 그대로 들어간다는 걸 숫자로 확인한 셈이다.</p>
 <p><strong>[2] 두 다리의 가치.</strong> 변동 다리 현재가치는 선도금리로 하나씩 할인해 더해도, 1 − D(3y) 로 한 번에 계산해도 103,027,121원으로 같다. 3년 할인계수는 0.896973 이다. par 스왑 금리는 3.6390% 로 3년 입력 금리와 정확히 같은데, 3년 par 금리를 넣어 곡선을 만들었으니 당연한 검산이다. 고정 3.20% 다리는 90,598,183원이라 고정 지급자 입장의 가치는 <strong>약 1,243만원</strong>이다. (3.639% − 3.20%) × 2.831193 × 10억으로 계산해도 같은 값이 나온다. 계약 이후 금리가 올라서, 낮은 고정금리를 내기로 한 쪽이 이득을 보고 있는 상황이다.</p>
 <p><strong>[4] QuantLib.</strong> 실제 영업일과 Act/365 일수 계산을 넣은 QuantLib 결과는 1,245.9만원으로 수동 계산과 약 3만원 차이다. 날짜 계산 차이다. QuantLib 은 받는 다리를 +, 내는 다리를 − 로 표시해서 고정 다리 PV 가 음수로 나온다.</p>
-<!--card:bars-->
+<div style="text-align:center;margin:28px 0"><img src="https://raw.githubusercontent.com/kcy19981201-create/autoblog/main/images/2026-11-12-quant-diary-12-interest-rate-swap/bars.png" alt="퀀트 공부 일기 #12 - 이자율 스왑 평가 - SENSITIVITY" style="width:100%;max-width:640px;border-radius:18px" /></div>
 
 <h2>리스크관리: 스왑의 DV01</h2>
 <p>금리가 전 구간 1bp 오르면 고정 지급자의 가치는 281,106원 늘어난다. 근사식으로는 N·A·1bp = 10억 × 2.831193 × 0.0001 ≈ 283,119원인데, 실제 값이 조금 작은 건 금리가 오르면 할인계수가 줄어 연금계수 A 도 같이 줄기 때문이다. QuantLib 의 고정 다리 BPS(−283,797원)는 할인곡선은 그대로 두고 고정금리만 1bp 바꾼 값이라 근사식 쪽에 가깝다. 고정 지급 스왑은 금리가 오를 때 이득이니, <a href="https://quantlib-diary.blogspot.com/2026/10/3.html">#3</a>의 채권과 부호가 반대다. 그래서 고정금리 채권을 들고 있는 쪽이 금리 위험을 줄이려 고정 지급 스왑을 쓴다.</p>
@@ -158,7 +160,7 @@ print(f&quot;  BPS(고정 다리 1bp) = {sw.fixedLegBPS():,.0f}원&quot;)</code>
 <p>2008년 이후 대부분의 시장은 선도금리를 추정하는 곡선(지표금리 곡선)과 할인에 쓰는 곡선(담보 금리 기준 곡선)을 나누는 다중 곡선 방식을 쓴다. 그러면 1 − D(T) 망원 합이 더 이상 성립하지 않고, 선도금리를 하나씩 할인해야 한다. 오늘 코드의 [2] 에서 선도금리 합으로 따로 계산해 본 것도 그 때문이다. 구조는 같고 곡선이 두 개가 될 뿐이다.</p>
 <h3>Q. 국고채 금리를 그대로 스왑 금리로 써도 되나?</h3>
 <p>안 된다. 오늘은 같은 날 IRS 호가를 확인하지 못해서 둔 가정이다. 스왑 금리와 국고채 금리의 차이(스왑 스프레드)는 수급과 신용, 자금 조달 여건에 따라 움직이고 0 이 아니다. 실제 평가에서는 CD 와 IRS 호가로 곡선을 따로 만든다. 계산 순서는 오늘과 같다.</p>
-<!--card:summary-->
+<div style="text-align:center;margin:28px 0"><img src="https://raw.githubusercontent.com/kcy19981201-create/autoblog/main/images/2026-11-12-quant-diary-12-interest-rate-swap/summary.png" alt="퀀트 공부 일기 #12 - 이자율 스왑 평가 - SUMMARY" style="width:100%;max-width:640px;border-radius:18px" /></div>
 
 <h2>오늘의 한 줄</h2>
 <p><strong>스왑 가치는 두 다리 현재가치의 차이이고, 단일 곡선에서 변동 다리는 1 − D(T) 로 접힌다. 11월 9일 금리(국고채를 스왑 금리로 가정)로 보면 3년 par 스왑 금리는 3.639%, 고정 3.20%를 내는 10억짜리 스왑의 가치는 약 1,243만원, DV01 은 약 28만원이었다. 다음 일기 #13은 변동성 스마일과 내재변동성.</strong></p>
