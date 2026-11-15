@@ -2,9 +2,11 @@
 title: 퀀트 공부 일기 #13 - 변동성 스마일과 내재변동성
 labels: 퀀트 공부 일기, 금융공학, 내재변동성
 ---
+<span data-cards-built=""></span>
+<div style="text-align:center;margin:28px 0"><img src="https://raw.githubusercontent.com/kcy19981201-create/autoblog/main/images/2026-11-16-quant-diary-13-volatility-smile-implied-vol/cover.png" alt="퀀트 공부 일기 #13 - 변동성 스마일과 내재변동성 - QUANT DIARY #13" style="width:100%;max-width:640px;border-radius:18px" /></div>
 <p><strong>2026년 11월 16일.</strong></p>
 <p>블랙숄즈 공식에 들어가는 값 중 시장에서 직접 보이지 않는 건 변동성 σ 하나다. 그래서 실무에서는 방향을 뒤집는다. 시장에서 거래되는 옵션 가격을 공식에 넣고, 그 가격이 나오게 하는 σ 를 거꾸로 찾는다. 이게 <strong>내재변동성(implied volatility)</strong>이다. 문제는 행사가마다 구해 보면 σ 가 하나로 모이지 않는다는 점이다. 행사가를 가로축에 놓고 그리면 웃는 입 모양이나 한쪽으로 기운 곡선이 나오는데, 이걸 <strong>변동성 스마일(smile)</strong> 또는 스큐(skew)라고 부른다. 블랙숄즈는 <a href="https://quantlib-diary.blogspot.com/2026/10/5_01857029615.html">#5</a>에서, 베가는 <a href="https://quantlib-diary.blogspot.com/2026/10/6.html">#6</a>에서 다뤘고, 전체 지도는 <a href="https://quantlib-diary.blogspot.com/2026/10/0.html">#0 프롤로그</a>에 있다.</p>
-<!--card:idea-->
+<div style="text-align:center;margin:28px 0"><img src="https://raw.githubusercontent.com/kcy19981201-create/autoblog/main/images/2026-11-16-quant-diary-13-volatility-smile-implied-vol/idea.png" alt="퀀트 공부 일기 #13 - 변동성 스마일과 내재변동성 - KEY IDEA" style="width:100%;max-width:640px;border-radius:18px" /></div>
 
 <h2>직관: 가격을 변동성 단위로 다시 쓴 것</h2>
 <p>옵션 가격은 행사가, 만기, 기초자산 가격에 따라 크기가 제각각이라 서로 비교하기 어렵다. 내재변동성은 그 가격들을 "블랙숄즈로 보면 연 몇 % 변동성에 해당하는가"라는 공통 단위로 바꿔 준다. 채권 가격을 수익률로 바꿔 부르는 것과 같은 발상이다. 그러니 내재변동성은 미래 변동성의 예측치라기보다 <strong>가격을 부르는 방식</strong>에 가깝다.</p>
@@ -21,7 +23,7 @@ labels: 퀀트 공부 일기, 금융공학, 내재변동성
 <p>가장 많이 쓰는 방법은 <strong>뉴턴-랩슨법</strong>이다. 함수 f(σ) = BS(σ) − 시장가격 의 근을 찾을 때, 현재 점에서 접선을 그어 그 접선이 0이 되는 점으로 옮겨 가는 방식이다. 접선의 기울기가 바로 베가다.</p>
 <pre><code>σ_(n+1) = σ_n − (BS(σ_n) − 시장가격) / ν(σ_n)</code></pre>
 <p>근 근처에서는 오차가 매 반복마다 대략 제곱으로 줄어든다(2차 수렴). 대신 베가가 0에 가까운 곳, 즉 아주 깊은 외가격이나 만기 직전 옵션에서는 한 번에 너무 멀리 튈 수 있다. 그래서 실무 코드는 구간을 좁혀 가는 브렌트(Brent)법이나 이분법을 같이 쓴다. QuantLib 의 impliedVolatility 도 구간 [최소 σ, 최대 σ] 를 받아 그 안에서 근을 찾는다.</p>
-<!--card:compare-->
+<div style="text-align:center;margin:28px 0"><img src="https://raw.githubusercontent.com/kcy19981201-create/autoblog/main/images/2026-11-16-quant-diary-13-volatility-smile-implied-vol/compare.png" alt="퀀트 공부 일기 #13 - 변동성 스마일과 내재변동성 - VOL CONCEPTS" style="width:100%;max-width:640px;border-radius:18px" /></div>
 
 <h2>파이썬과 QuantLib으로 확인</h2>
 <p>실제 코스피200 옵션의 행사가별 호가는 공개 자료로 확인하지 못했다. 그래서 오늘은 <strong>가정한 시장</strong>을 쓴다. 스마일을 만들어 내는 대표 모형인 헤스턴(Heston) 확률변동성 모형으로 옵션 가격을 만들고, 그 가격을 "시장가격"으로 보고 다시 내재변동성을 뽑는다. 헤스턴 모형은 분산 v 자체가 평균으로 돌아가는 확률과정을 따르고, 주가와 분산의 충격이 상관계수 ρ 로 묶여 있다. ρ 가 음수면 주가가 떨어질 때 변동성이 올라가서 왼쪽 꼬리가 두꺼워진다. 오늘은 스마일이 있는 가격을 만들어 주는 도구로만 쓴다.</p>
@@ -128,7 +130,7 @@ for K in [80, 90]:
 [4] 위험중립 확률 (만기 지수 구간), 헤스턴 vs 평평한 BS
   P(S_T &lt; 80): 헤스턴 8.82%  평평BS 5.94%
   P(S_T &lt; 90): 헤스턴 20.76%  평평BS 23.25%</code></pre>
-<!--card:bars-->
+<div style="text-align:center;margin:28px 0"><img src="https://raw.githubusercontent.com/kcy19981201-create/autoblog/main/images/2026-11-16-quant-diary-13-volatility-smile-implied-vol/bars.png" alt="퀀트 공부 일기 #13 - 변동성 스마일과 내재변동성 - EXAMPLE" style="width:100%;max-width:640px;border-radius:18px" /></div>
 
 <h2>결과 읽기</h2>
 <p><strong>[1] 뉴턴법.</strong> 행사가 90 풋의 가격이 2.00 이라고 놓고 σ = 30% 에서 출발했다. 첫 반복에서 31.2540%, 두 번째에서 31.2399% 로 가고 그 뒤로는 소수 넷째 자리까지 바뀌지 않는다. 두 번 만에 가격 오차가 0.000000 까지 줄었다. 베가가 14 정도로 충분히 커서 접선이 잘 맞는 경우다.</p>
@@ -139,7 +141,7 @@ for K in [80, 90]:
 <h2>리스크관리: 베가는 행사가마다 다르다</h2>
 <p>스마일이 있으면 "변동성이 1%p 오르면 포트폴리오가 얼마 변하나"라는 질문이 애매해진다. 행사가마다 변동성이 다르고, 움직이는 방식도 다르기 때문이다. 그래서 실무에서는 변동성 곡면(행사가 × 만기)의 점마다 베가를 따로 잡는 <strong>버킷 베가</strong>를 본다. #12에서 금리 곡선 노드별 DV01 을 본 것과 같은 구조다. 오늘 표에서도 베가는 ATM 19.752 에서 80 풋 7.918 까지 두 배 넘게 차이 난다.</p>
 <p>지수가 움직일 때 스마일이 어떻게 따라오느냐도 가정이 필요하다. 행사가별 변동성이 그대로 있다고 보는 <strong>스티키 스트라이크</strong>, 머니니스(K/S) 기준으로 곡선이 같이 이동한다고 보는 <strong>스티키 델타(머니니스)</strong> 가 대표적이다. 어느 쪽을 쓰느냐에 따라 같은 옵션의 델타가 달라지니, 헤지 비율을 볼 때 이 가정을 같이 확인해야 한다.</p>
-<!--card:summary-->
+<div style="text-align:center;margin:28px 0"><img src="https://raw.githubusercontent.com/kcy19981201-create/autoblog/main/images/2026-11-16-quant-diary-13-volatility-smile-implied-vol/summary.png" alt="퀀트 공부 일기 #13 - 변동성 스마일과 내재변동성 - SUMMARY" style="width:100%;max-width:640px;border-radius:18px" /></div>
 
 <h2>자주 묻는 질문</h2>
 <h3>Q. 내재변동성과 역사적 변동성은 뭐가 다른가?</h3>
