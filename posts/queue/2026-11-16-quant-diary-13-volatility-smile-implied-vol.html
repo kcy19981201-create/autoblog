@@ -1,0 +1,168 @@
+---
+title: 퀀트 공부 일기 #13 - 변동성 스마일과 내재변동성
+labels: 퀀트 공부 일기, 금융공학, 내재변동성
+---
+<p><strong>2026년 11월 16일.</strong></p>
+<p>블랙숄즈 공식에 들어가는 값 중 시장에서 직접 보이지 않는 건 변동성 σ 하나다. 그래서 실무에서는 방향을 뒤집는다. 시장에서 거래되는 옵션 가격을 공식에 넣고, 그 가격이 나오게 하는 σ 를 거꾸로 찾는다. 이게 <strong>내재변동성(implied volatility)</strong>이다. 문제는 행사가마다 구해 보면 σ 가 하나로 모이지 않는다는 점이다. 행사가를 가로축에 놓고 그리면 웃는 입 모양이나 한쪽으로 기운 곡선이 나오는데, 이걸 <strong>변동성 스마일(smile)</strong> 또는 스큐(skew)라고 부른다. 블랙숄즈는 <a href="https://quantlib-diary.blogspot.com/2026/10/5_01857029615.html">#5</a>에서, 베가는 <a href="https://quantlib-diary.blogspot.com/2026/10/6.html">#6</a>에서 다뤘고, 전체 지도는 <a href="https://quantlib-diary.blogspot.com/2026/10/0.html">#0 프롤로그</a>에 있다.</p>
+<!--card:idea-->
+
+<h2>직관: 가격을 변동성 단위로 다시 쓴 것</h2>
+<p>옵션 가격은 행사가, 만기, 기초자산 가격에 따라 크기가 제각각이라 서로 비교하기 어렵다. 내재변동성은 그 가격들을 "블랙숄즈로 보면 연 몇 % 변동성에 해당하는가"라는 공통 단위로 바꿔 준다. 채권 가격을 수익률로 바꿔 부르는 것과 같은 발상이다. 그러니 내재변동성은 미래 변동성의 예측치라기보다 <strong>가격을 부르는 방식</strong>에 가깝다.</p>
+<p>블랙숄즈가 맞다면 같은 만기의 옵션은 행사가와 상관없이 내재변동성이 같아야 한다. 기초자산 수익률이 정규분포 하나를 따른다고 가정했으니까. 그런데 주가지수 옵션 시장에서는 행사가가 낮은 외가격 풋의 내재변동성이 높고, 행사가가 높은 콜 쪽으로 갈수록 낮아지는 <strong>왼쪽으로 기운 스큐</strong>가 흔하다. 시장이 급락 가능성을 정규분포보다 크게 보고, 하락 대비용 풋을 더 비싸게 사 주기 때문이다. 수익률 분포의 왼쪽 꼬리가 두껍다는 말을 가격으로 표현한 것이다.</p>
+
+<h2>최근 시장: 공포지수가 60을 넘었다</h2>
+<p>이 개념이 뉴스에 가장 자주 나오는 모습이 코스피200 변동성지수(VKOSPI), 이른바 공포지수다. 여러 행사가의 코스피200 옵션 가격을 모아 앞으로 한 달 정도의 기대 변동성을 연율 %로 나타낸 지수다. SBS Biz 보도에 따르면 <strong>2026년 11월 6일 오전 10시 25분 기준 VKOSPI 는 64.74</strong>로 전일보다 6.53포인트(11.22%) 올랐고, 60선은 8월 19일 이후 약 3개월 만이었다. 같은 기사는 2010년 이후 평균을 20 안팎으로 소개했다. 이날 코스피는 장중 5,000선 아래로 내려갔다.</p>
+<p>연 64.74% 라는 숫자를 √(1/12) 로 바꾸면 한 달 기준 약 18.7% 다. 옵션 시장이 "한 달 동안 지수가 ±18.7% 정도 움직이는 것"을 1 표준편차로 가격에 넣고 있었다는 뜻이다. 다만 VKOSPI 는 여러 행사가를 묶은 하나의 숫자라서 스마일의 모양까지는 보여 주지 않는다. 오늘은 그 안쪽, 행사가별 내재변동성을 직접 구해 본다.</p>
+
+<h2>수학: 방정식 하나를 수치적으로 푼다</h2>
+<p>내재변동성은 다음 방정식의 해다.</p>
+<pre><code>BS(S, K, T, r, σ) = 시장가격   →   σ_imp 를 구한다</code></pre>
+<p>블랙숄즈 식을 σ 에 대해 깔끔하게 풀어 쓰는 공식은 없다. 그래서 수치해석이 필요하다. 다행히 성질이 좋다. 가격을 σ 로 미분한 값이 #6의 <strong>베가</strong> ν = S·φ(d₁)·√T 인데, 이게 항상 양수라서 가격은 σ 에 대해 단조 증가한다. 그러니 무차익 범위 안의 가격이면 해가 정확히 하나 있다.</p>
+<p>가장 많이 쓰는 방법은 <strong>뉴턴-랩슨법</strong>이다. 함수 f(σ) = BS(σ) − 시장가격 의 근을 찾을 때, 현재 점에서 접선을 그어 그 접선이 0이 되는 점으로 옮겨 가는 방식이다. 접선의 기울기가 바로 베가다.</p>
+<pre><code>σ_(n+1) = σ_n − (BS(σ_n) − 시장가격) / ν(σ_n)</code></pre>
+<p>근 근처에서는 오차가 매 반복마다 대략 제곱으로 줄어든다(2차 수렴). 대신 베가가 0에 가까운 곳, 즉 아주 깊은 외가격이나 만기 직전 옵션에서는 한 번에 너무 멀리 튈 수 있다. 그래서 실무 코드는 구간을 좁혀 가는 브렌트(Brent)법이나 이분법을 같이 쓴다. QuantLib 의 impliedVolatility 도 구간 [최소 σ, 최대 σ] 를 받아 그 안에서 근을 찾는다.</p>
+<!--card:compare-->
+
+<h2>파이썬과 QuantLib으로 확인</h2>
+<p>실제 코스피200 옵션의 행사가별 호가는 공개 자료로 확인하지 못했다. 그래서 오늘은 <strong>가정한 시장</strong>을 쓴다. 스마일을 만들어 내는 대표 모형인 헤스턴(Heston) 확률변동성 모형으로 옵션 가격을 만들고, 그 가격을 "시장가격"으로 보고 다시 내재변동성을 뽑는다. 헤스턴 모형은 분산 v 자체가 평균으로 돌아가는 확률과정을 따르고, 주가와 분산의 충격이 상관계수 ρ 로 묶여 있다. ρ 가 음수면 주가가 떨어질 때 변동성이 올라가서 왼쪽 꼬리가 두꺼워진다. 오늘은 스마일이 있는 가격을 만들어 주는 도구로만 쓴다.</p>
+<p>조건은 이렇다. 지수는 100으로 정규화, 만기 91일, 무위험금리는 2026년 11월 9일 CD 91일물 금리 연 3.36%(금융투자협회 기준, 핀포인트뉴스 보도), 배당은 0으로 둔다. 헤스턴 파라미터는 장기 변동성 30%, ρ = −0.7 등 설명용으로 고른 값이다.</p>
+<pre><code>import numpy as np
+import QuantLib as ql
+from scipy.stats import norm
+
+S0, r, q, T = 100.0, 0.0336, 0.0, 91/365  # 지수 100으로 정규화, r = CD 91일물(11/9)
+
+def bs_call(S, K, T, r, sig):
+    d1 = (np.log(S/K) + (r + 0.5*sig**2)*T)/(sig*np.sqrt(T)); d2 = d1 - sig*np.sqrt(T)
+    return S*norm.cdf(d1) - K*np.exp(-r*T)*norm.cdf(d2)
+def bs_put(S, K, T, r, sig):
+    return bs_call(S, K, T, r, sig) - S + K*np.exp(-r*T)
+def vega(S, K, T, r, sig):
+    d1 = (np.log(S/K) + (r + 0.5*sig**2)*T)/(sig*np.sqrt(T))
+    return S*norm.pdf(d1)*np.sqrt(T)
+
+def implied_vol(price, S, K, T, r, kind=&quot;put&quot;, sig=0.3, tol=1e-10):
+    f = bs_put if kind == &quot;put&quot; else bs_call
+    for n in range(1, 50):
+        diff = f(S, K, T, r, sig) - price
+        if abs(diff) &lt; tol: return sig, n
+        sig -= diff/vega(S, K, T, r, sig)
+    raise RuntimeError
+
+# [1] 뉴턴법 한 번 따라가기: 행사가 90 풋 시장가격 2.00 이라고 가정
+print(&quot;[1] K=90 풋, 가격 2.00 의 내재변동성 (뉴턴법)&quot;)
+sig = 0.30
+for n in range(4):
+    p = bs_put(S0, 90, T, r, sig); v = vega(S0, 90, T, r, sig)
+    print(f&quot;  반복 {n}: sigma={sig*100:8.4f}%  BS가격={p:.6f}  vega={v:.4f}&quot;)
+    sig -= (p - 2.00)/v
+
+# [2] 헤스턴 모형으로 &#x27;시장 가격&#x27; 만들기 (가정 파라미터)
+today = ql.Date(13, 11, 2026); ql.Settings.instance().evaluationDate = today
+dc = ql.Actual365Fixed(); cal = ql.NullCalendar()
+mat = today + 91
+rts = ql.YieldTermStructureHandle(ql.FlatForward(today, r, dc))
+dts = ql.YieldTermStructureHandle(ql.FlatForward(today, q, dc))
+v0, kappa, theta, xi, rho = 0.09, 2.0, 0.09, 0.8, -0.7
+proc = ql.HestonProcess(rts, dts, ql.QuoteHandle(ql.SimpleQuote(S0)), v0, kappa, theta, xi, rho)
+eng = ql.AnalyticHestonEngine(ql.HestonModel(proc))
+print(f&quot;\n[2] 헤스턴 가정: v0={v0}, theta={theta} (sqrt=30%), kappa={kappa}, xi={xi}, rho={rho}, T=3개월&quot;)
+print(&quot;   K   종류    가격     내재변동성(직접)  QuantLib  vega&quot;)
+Ks = [80, 85, 90, 95, 100, 105, 110, 115, 120]
+ivs = {}
+for K in Ks:
+    kind = &quot;put&quot; if K &lt; 100 else &quot;call&quot;
+    opt = ql.VanillaOption(ql.PlainVanillaPayoff(ql.Option.Put if kind==&quot;put&quot; else ql.Option.Call, K), ql.EuropeanExercise(mat))
+    opt.setPricingEngine(eng); price = opt.NPV()
+    iv, n = implied_vol(price, S0, K, T, r, kind)
+    bsp = ql.BlackScholesMertonProcess(ql.QuoteHandle(ql.SimpleQuote(S0)), dts, rts,
+            ql.BlackVolTermStructureHandle(ql.BlackConstantVol(today, cal, 0.3, dc)))
+    iv_ql = opt.impliedVolatility(price, bsp, 1e-10, 200, 1e-4, 4.0)
+    ivs[K] = iv
+    print(f&quot;  {K:3d}  {kind:4s}  {price:8.4f}   {iv*100:7.3f}% ({n}회)   {iv_ql*100:7.3f}%  {vega(S0,K,T,r,iv):.3f}&quot;)
+
+# [3] 평평한 변동성(ATM)으로 매기면 얼마나 틀리나
+atm = ivs[100]
+print(f&quot;\n[3] ATM 변동성 {atm*100:.3f}% 하나로 매긴 가격 vs 스마일 가격&quot;)
+for K in [80, 90, 110, 120]:
+    f = bs_put if K &lt; 100 else bs_call
+    flat = f(S0, K, T, r, atm); true = f(S0, K, T, r, ivs[K])
+    print(f&quot;  K={K}: 평평 {flat:.4f}  스마일 {true:.4f}  차이 {true-flat:+.4f} ({(true/flat-1)*100:+.1f}%)&quot;)
+
+# [4] 브리든-리첸버거: 콜 가격의 2계 미분 -&gt; 위험중립 밀도
+h = 1.0
+def call_px(K):
+    o = ql.VanillaOption(ql.PlainVanillaPayoff(ql.Option.Call, K), ql.EuropeanExercise(mat)); o.setPricingEngine(eng); return o.NPV()
+print(&quot;\n[4] 위험중립 확률 (만기 지수 구간), 헤스턴 vs 평평한 BS&quot;)
+def prob_below(K, kind):
+    if kind == &quot;h&quot;: dC = (call_px(K+h) - call_px(K-h))/(2*h)
+    else: dC = (bs_call(S0, K+h, T, r, atm) - bs_call(S0, K-h, T, r, atm))/(2*h)
+    return 1 + np.exp(r*T)*dC
+for K in [80, 90]:
+    print(f&quot;  P(S_T &lt; {K}): 헤스턴 {prob_below(K,&#x27;h&#x27;)*100:.2f}%  평평BS {prob_below(K,&#x27;b&#x27;)*100:.2f}%&quot;)</code></pre>
+<p>출력(QuantLib 1.44):</p>
+<pre><code>[1] K=90 풋, 가격 2.00 의 내재변동성 (뉴턴법)
+  반복 0: sigma= 30.0000%  BS가격=1.823606  vega=14.0662
+  반복 1: sigma= 31.2540%  BS가격=2.002035  vega=14.3853
+  반복 2: sigma= 31.2399%  BS가격=2.000000  vega=14.3819
+  반복 3: sigma= 31.2399%  BS가격=2.000000  vega=14.3819
+
+[2] 헤스턴 가정: v0=0.09, theta=0.09 (sqrt=30%), kappa=2.0, xi=0.8, rho=-0.7, T=3개월
+   K   종류    가격     내재변동성(직접)  QuantLib  vega
+   80  put     0.7922    36.595% (5회)    36.595%  7.918
+   85  put     1.3451    34.594% (5회)    34.594%  11.169
+   90  put     2.1920    32.561% (4회)    32.561%  14.685
+   95  put     3.4414    30.489% (4회)    30.489%  17.853
+  100  call    6.0548    28.395% (3회)    28.395%  19.752
+  105  call    3.5411    26.349% (4회)    26.349%  19.348
+  110  call    1.7940    24.519% (5회)    24.519%  16.138
+  115  call    0.7850    23.136% (5회)    23.136%  11.123
+  120  call    0.3086    22.308% (6회)    22.308%  6.409
+
+[3] ATM 변동성 28.395% 하나로 매긴 가격 vs 스마일 가격
+  K=80: 평평 0.2709  스마일 0.7922  차이 +0.5212 (+192.4%)
+  K=90: 평평 1.6015  스마일 2.1920  차이 +0.5906 (+36.9%)
+  K=110: 평평 2.4414  스마일 1.7940  차이 -0.6473 (-26.5%)
+  K=120: 평평 0.8196  스마일 0.3086  차이 -0.5110 (-62.3%)
+
+[4] 위험중립 확률 (만기 지수 구간), 헤스턴 vs 평평한 BS
+  P(S_T &lt; 80): 헤스턴 8.82%  평평BS 5.94%
+  P(S_T &lt; 90): 헤스턴 20.76%  평평BS 23.25%</code></pre>
+<!--card:bars-->
+
+<h2>결과 읽기</h2>
+<p><strong>[1] 뉴턴법.</strong> 행사가 90 풋의 가격이 2.00 이라고 놓고 σ = 30% 에서 출발했다. 첫 반복에서 31.2540%, 두 번째에서 31.2399% 로 가고 그 뒤로는 소수 넷째 자리까지 바뀌지 않는다. 두 번 만에 가격 오차가 0.000000 까지 줄었다. 베가가 14 정도로 충분히 커서 접선이 잘 맞는 경우다.</p>
+<p><strong>[2] 스마일.</strong> 헤스턴 가격을 뒤집은 내재변동성은 행사가 80 에서 36.595%, ATM(100) 에서 28.395%, 120 에서 22.308% 로 행사가가 올라갈수록 내려간다. 주가지수 옵션에서 흔히 보는 왼쪽 스큐 모양이다. 직접 짠 뉴턴법과 QuantLib 결과가 소수 셋째 자리까지 같다. 반복 횟수는 ATM 이 3회로 가장 적고 양 끝(80, 120)이 5~6회로 많은데, 베가가 ATM 에서 19.752 로 가장 크고 양 끝에서 7.918, 6.409 로 작아지는 것과 맞물린다.</p>
+<p><strong>[3] 평평한 변동성의 오류.</strong> ATM 변동성 28.395% 하나로 모든 옵션을 매기면 행사가 80 풋은 0.2709 로, 스마일 가격 0.7922 의 3분의 1 남짓밖에 안 된다(+192.4% 차이). 반대로 120 콜은 0.8196 으로 스마일 가격 0.3086 보다 비싸게 나온다. 깊은 외가격일수록 변동성 1%p 차이가 가격 비율로는 크게 번진다. 꼬리 위험을 파는 쪽이 변동성 하나로 가격을 매기면 손해 보는 이유다.</p>
+<p><strong>[4] 스마일이 말하는 분포.</strong> 콜 가격을 행사가로 한 번 미분하면 만기에 그 행사가 아래로 끝날 위험중립 확률이 나온다(브리든-리첸버거 관계, 두 번 미분하면 확률밀도). 헤스턴 가격에서 구한 P(S_T &lt; 80) 은 8.82% 로, 평평한 BS 의 5.94% 보다 높다. 그런데 P(S_T &lt; 90) 은 헤스턴 20.76%, BS 23.25% 로 오히려 낮다. 스큐가 있는 분포는 "전체적으로 더 떨어진다"가 아니라 <strong>왼쪽 꼬리는 두껍고 가운데 약간 아래는 얇은</strong> 모양이라는 걸 숫자로 볼 수 있다.</p>
+
+<h2>리스크관리: 베가는 행사가마다 다르다</h2>
+<p>스마일이 있으면 "변동성이 1%p 오르면 포트폴리오가 얼마 변하나"라는 질문이 애매해진다. 행사가마다 변동성이 다르고, 움직이는 방식도 다르기 때문이다. 그래서 실무에서는 변동성 곡면(행사가 × 만기)의 점마다 베가를 따로 잡는 <strong>버킷 베가</strong>를 본다. #12에서 금리 곡선 노드별 DV01 을 본 것과 같은 구조다. 오늘 표에서도 베가는 ATM 19.752 에서 80 풋 7.918 까지 두 배 넘게 차이 난다.</p>
+<p>지수가 움직일 때 스마일이 어떻게 따라오느냐도 가정이 필요하다. 행사가별 변동성이 그대로 있다고 보는 <strong>스티키 스트라이크</strong>, 머니니스(K/S) 기준으로 곡선이 같이 이동한다고 보는 <strong>스티키 델타(머니니스)</strong> 가 대표적이다. 어느 쪽을 쓰느냐에 따라 같은 옵션의 델타가 달라지니, 헤지 비율을 볼 때 이 가정을 같이 확인해야 한다.</p>
+<!--card:summary-->
+
+<h2>자주 묻는 질문</h2>
+<h3>Q. 내재변동성과 역사적 변동성은 뭐가 다른가?</h3>
+<p>역사적 변동성은 과거 수익률의 표준편차를 연율화한 값이고, 내재변동성은 지금 옵션 가격에서 거꾸로 뽑은 값이다. 앞은 지난 일을 재고, 뒤는 시장이 지금 매기는 가격을 변동성 단위로 쓴 것이다. 내재변동성에는 위험 회피 프리미엄도 섞여 있어서 보통 이후 실제 변동성보다 높게 나오는 경향이 알려져 있다.</p>
+<h3>Q. 왜 주가지수는 스마일보다 스큐가 뚜렷한가?</h3>
+<p>주가지수는 급락할 때 변동성이 함께 뛰는 경향이 있고(오늘 헤스턴에서 ρ 를 음수로 둔 이유), 기관이 하락 대비용으로 외가격 풋을 꾸준히 산다. 그래서 왼쪽이 높고 오른쪽이 낮은 비대칭 곡선이 된다. 양쪽이 비슷하게 올라가는 대칭 스마일은 통화 옵션 같은 시장에서 더 자주 보인다.</p>
+<h3>Q. 시장 호가로 스마일을 만들 때 주의할 점은?</h3>
+<p>거래가 적은 행사가는 호가 차이가 커서 내재변동성이 튄다. 그래서 보통 매수·매도 중간값을 쓰고, 외가격 쪽 옵션(행사가 아래는 풋, 위는 콜)만 골라 쓰며, 뽑은 점들을 SVI 같은 매개변수 곡선으로 매끄럽게 맞춘다. 맞춘 곡선이 무차익 조건(콜 가격이 행사가에 대해 볼록)을 지키는지도 확인한다. 오늘 [4] 의 확률이 음수가 되면 곡선이 잘못된 것이다.</p>
+
+<h2>오늘의 한 줄</h2>
+<p><strong>내재변동성은 옵션 가격을 블랙숄즈의 σ 로 다시 쓴 것이고, 베가를 기울기로 쓰는 뉴턴법이면 몇 번 만에 구해진다. 헤스턴(ρ = −0.7) 가정 시장에서 3개월 스마일은 행사가 80 에서 36.6%, ATM 28.4%, 120 에서 22.3% 로 기울었고, 평평한 변동성으로 매기면 80 풋 가격이 3분의 1로 줄었다. 다음 일기 #14는 VaR 계산 방법.</strong></p>
+
+<h2>함께 보면 좋은 글</h2>
+<ul>
+<li><a href="https://quantlib-diary.blogspot.com/2026/10/0.html">퀀트 공부 일기 #0 - 파생상품 평가, 전체 그림부터</a></li>
+<li><a href="https://quantlib-diary.blogspot.com/2026/10/5_01857029615.html">퀀트 공부 일기 #5 - 위험중립 가격결정과 블랙숄즈</a></li>
+<li><a href="https://quantlib-diary.blogspot.com/2026/10/6.html">퀀트 공부 일기 #6 - 그릭스: 델타, 감마, 베가</a></li>
+</ul>
+
+<h2>참고한 자료</h2>
+<ul>
+<li><a href="https://biz.sbs.co.kr/article/20000344701">SBS Biz - '5천피' 깨지자 변동성 지수 껑충…3개월 만에 최고치 (2026.11.06, VKOSPI 64.74)</a></li>
+<li><a href="https://www.pinpointnews.co.kr/news/articleView.html?idxno=502508">핀포인트뉴스 - 국고채부터 회사채까지 금리 상승… CD 91일물도 올라 (2026.11.09, CD 91일물 3.36%)</a></li>
+<li><a href="https://data.krx.co.kr/">한국거래소 정보데이터시스템 - 파생상품 지수(VKOSPI)</a></li>
+<li><a href="https://www.quantlib.org/">QuantLib 공식 사이트</a></li>
+</ul>

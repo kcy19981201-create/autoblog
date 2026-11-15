@@ -1,0 +1,41 @@
+{
+ "style": "pro",
+ "theme": "navy",
+ "cards": [
+  {"name": "cover", "type": "cover", "tag": "QUANT DIARY #13",
+   "title": "변동성 스마일과\n**내재변동성**",
+   "subtitle": "옵션 가격을 변동성으로 다시 읽고, 행사가마다 다른 이유를 본다",
+   "chips": ["Implied Volatility", "Volatility Smile", "Newton-Raphson"]},
+  {"name": "idea", "type": "points", "tag": "KEY IDEA",
+   "title": "가격에서 σ 를 거꾸로 찾는다",
+   "points": [
+    {"t": "내재변동성", "d": "BS 가격 = 시장가격이 되는 σ"},
+    {"t": "해는 하나", "d": "베가가 양수라 가격이 σ 에 단조 증가"},
+    {"t": "뉴턴법", "d": "베가를 기울기로 몇 번 반복하면 수렴"},
+    {"t": "스큐", "d": "지수 옵션은 낮은 행사가 쪽 σ 가 높다"}
+   ]},
+  {"name": "compare", "type": "compare", "tag": "VOL CONCEPTS",
+   "title": "변동성 세 가지",
+   "headers": ["구분", "계산 재료", "의미"],
+   "rows": [
+    ["역사적 변동성", "과거 수익률", "지난 움직임"],
+    ["내재변동성", "옵션 가격 1개", "가격의 σ 표기"],
+    ["VKOSPI", "여러 행사가 옵션", "시장 기대 변동성"]
+   ],
+   "tip": "VKOSPI 64.74, 2026-11-06 10:25 기준 (SBS Biz)"},
+  {"name": "bars", "type": "bars", "tag": "EXAMPLE",
+   "title": "행사가별 내재변동성 (3개월)",
+   "items": [
+    {"label": "K=80 풋", "value": 36.595, "display": "36.6%"},
+    {"label": "K=90 풋", "value": 32.561, "display": "32.6%"},
+    {"label": "K=100 ATM", "value": 28.395, "display": "28.4%"},
+    {"label": "K=120 콜", "value": 22.308, "display": "22.3%"}
+   ],
+   "takeaway": "행사가가 낮을수록 내재변동성이 높은 왼쪽 스큐",
+   "note": "* 가정: 헤스턴 모형 가격, 지수 100, 만기 91일, r=3.36%(CD 91일물 11/9), ρ=−0.7"},
+  {"name": "summary", "type": "check", "tag": "SUMMARY",
+   "title": "오늘 정리",
+   "items": ["σ_(n+1) = σ_n − (BS − 가격)/ν", "ATM 은 3회, 양 끝은 5~6회 반복", "평평한 σ 로 80 풋 가격 약 1/3", "P(S_T < 80): 8.82% vs 5.94%", "베가는 행사가별로 따로 본다"],
+   "tip": "다음 일기: VaR 계산 방법"}
+ ]
+}
