@@ -1,0 +1,40 @@
+{
+ "style": "pro",
+ "theme": "navy",
+ "cards": [
+  {"name": "cover", "type": "cover", "tag": "QUANT DIARY #14",
+   "title": "VaR 계산 방법\n**손실 분포의 99% 지점**",
+   "subtitle": "분산-공분산, 역사적 시뮬레이션, 몬테카를로를 같은 포지션에 적용해 본다",
+   "chips": ["Value at Risk", "Expected Shortfall", "Full Revaluation"]},
+  {"name": "idea", "type": "points", "tag": "KEY IDEA",
+   "title": "VaR 는 손실 분포의 분위수",
+   "points": [
+    {"t": "정의", "d": "99% 확률로 이보다 덜 잃는 금액"},
+    {"t": "기간과 신뢰수준", "d": "1일·10일, 95%·99% 를 같이 표기"},
+    {"t": "ES", "d": "VaR 너머 손실의 평균"},
+    {"t": "비선형 상품", "d": "옵션은 완전재평가가 필요"}
+   ]},
+  {"name": "compare", "type": "compare", "tag": "THREE METHODS",
+   "title": "VaR 계산 방법 세 가지",
+   "headers": ["방법", "핵심 가정", "약점"],
+   "rows": [
+    ["분산-공분산", "정규분포", "두꺼운 꼬리 무시"],
+    ["역사적 시뮬레이션", "과거 250일 반복", "없던 사건 못 봄"],
+    ["몬테카를로", "확률모형 시나리오", "계산량, 모형 위험"]
+   ],
+   "tip": "코스피 11/17 종가 4,968.48 (−2.59%), 아시아경제"},
+  {"name": "bars", "type": "bars", "tag": "EXAMPLE",
+   "title": "풋 매도 10일 VaR 99%",
+   "items": [
+    {"label": "델타-노멀", "value": 622, "display": "622만원"},
+    {"label": "델타-감마", "value": 877, "display": "877만원"},
+    {"label": "완전재평가", "value": 868, "display": "868만원"}
+   ],
+   "takeaway": "델타 근사는 완전재평가보다 약 28% 작다",
+   "note": "* 가정: 명목 1억 원 3개월 ATM 풋 매도, 연 변동성 30%, r=3.36%(CD 91일물 11/9)"},
+  {"name": "summary", "type": "check", "tag": "SUMMARY",
+   "title": "오늘 정리",
+   "items": ["VaR = z × σ × 금액, z(99%) = 2.3263", "지수 1억 원 1일 VaR 471~494만원", "ES 97.5%: 정규 473 vs 역사적 562", "10일 VaR 는 √10 배, 1,488만원", "백테스팅 250일 중 4회 이하 녹색"],
+   "tip": "다음 일기: 헐-화이트 금리 모형"}
+ ]
+}
