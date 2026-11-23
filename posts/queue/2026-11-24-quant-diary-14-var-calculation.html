@@ -2,9 +2,11 @@
 title: 퀀트 공부 일기 #14 - VaR 계산 방법
 labels: 퀀트 공부 일기, 금융공학, VaR
 ---
+<span data-cards-built=""></span>
+<div style="text-align:center;margin:28px 0"><img src="https://raw.githubusercontent.com/kcy19981201-create/autoblog/main/images/2026-11-24-quant-diary-14-var-calculation/cover.png" alt="퀀트 공부 일기 #14 - VaR 계산 방법 - QUANT DIARY #14" style="width:100%;max-width:640px;border-radius:18px" /></div>
 <p><strong>2026년 11월 24일.</strong></p>
 <p>지금까지는 상품 하나의 가격과 민감도를 구했다. 리스크관리에서는 질문이 바뀐다. "이 포지션을 하루 들고 있으면 나쁜 날 얼마까지 잃을 수 있나." 이걸 숫자 하나로 답하는 게 <strong>VaR(Value at Risk, 위험가치)</strong>다. 정의는 "신뢰수준 99%에서 1일 동안 이보다 크게 잃을 확률이 1%인 손실 금액"이다. 계산 방법은 크게 세 가지, 분산-공분산법, 역사적 시뮬레이션, 몬테카를로다. 그릭스는 <a href="https://quantlib-diary.blogspot.com/2026/10/6.html">#6</a>, 몬테카를로는 <a href="https://quantlib-diary.blogspot.com/2026/10/7.html">#7</a>에서 다뤘고, 전체 지도는 <a href="https://quantlib-diary.blogspot.com/2026/10/0.html">#0 프롤로그</a>에 있다.</p>
-<!--card:idea-->
+<div style="text-align:center;margin:28px 0"><img src="https://raw.githubusercontent.com/kcy19981201-create/autoblog/main/images/2026-11-24-quant-diary-14-var-calculation/idea.png" alt="퀀트 공부 일기 #14 - VaR 계산 방법 - KEY IDEA" style="width:100%;max-width:640px;border-radius:18px" /></div>
 
 <h2>직관: 손익 분포의 왼쪽 1% 지점</h2>
 <p>내일 포지션의 손익을 확률분포로 그려 본다. 대부분은 0 근처에 몰리고, 가끔 크게 벌거나 잃는다. 이 분포에서 왼쪽 끝부터 1% 를 잘라낸 경계선이 99% VaR 이다. 수식으로 쓰면 손실 L 에 대해 P(L &gt; VaR) = 1% 가 되는 값, 즉 <strong>손실 분포의 99% 분위수</strong>다.</p>
@@ -20,7 +22,7 @@ labels: 퀀트 공부 일기, 금융공학, VaR
 <p>분포를 가정하지 않는다. 과거 250영업일의 실제 수익률을 오늘 포지션에 그대로 다시 적용해 250개의 손익 시나리오를 만들고, 그중 손실이 큰 쪽 1% 지점을 고른다. 250 × 1% = 2.5 이므로 보통 세 번째로 큰 손실(또는 2, 3번째 사이 보간)을 쓴다. 두꺼운 꼬리와 자산 간 상관이 데이터에 이미 들어 있다는 게 장점이고, 과거 250일에 없던 사건은 못 본다는 게 단점이다.</p>
 <h3>3. 몬테카를로 시뮬레이션</h3>
 <p>위험요인(지수, 금리, 변동성)의 확률모형을 정하고 난수로 수만 개 시나리오를 만든 뒤, 시나리오마다 포지션을 <strong>완전재평가</strong>한다. 옵션 가격 공식을 다시 돌려 손익을 구하니 비선형성이 정확히 반영된다. 대신 시나리오 수 × 상품 수만큼 평가를 돌려야 해서 계산이 가장 무겁다.</p>
-<!--card:compare-->
+<div style="text-align:center;margin:28px 0"><img src="https://raw.githubusercontent.com/kcy19981201-create/autoblog/main/images/2026-11-24-quant-diary-14-var-calculation/compare.png" alt="퀀트 공부 일기 #14 - VaR 계산 방법 - THREE METHODS" style="width:100%;max-width:640px;border-radius:18px" /></div>
 
 <h2>예시 숫자: 지수 1억 원과 풋 매도</h2>
 <p>오늘은 두 가지 포지션을 가정한다. 하나는 코스피200 같은 지수에 1억 원을 산 선형 포지션, 다른 하나는 같은 명목 1억 원어치의 3개월 등가격(ATM) 풋 옵션을 판 비선형 포지션이다. 연 변동성은 30% 로 가정해 일간으로는 30% / √252 = 1.890% 다. 실제 과거 수익률 대신 꼬리가 두꺼운 t분포(자유도 4)로 만든 가상 데이터 250일을 쓴다. 무위험금리는 2026년 11월 9일 CD 91일물 금리 연 3.36%(금융투자협회 기준, 핀포인트뉴스 보도)를 썼다.</p>
@@ -114,7 +116,7 @@ for m in [-0.0259, -0.05]:
   10일 VaR99  델타-노멀 622  델타-감마 877  완전재평가 868 (만원)
   지수 -2.59%: 지수 1억 손익 -259만원, 풋 매도 손익 -122만원
   지수 -5.00%: 지수 1억 손익 -500만원, 풋 매도 손익 -255만원</code></pre>
-<!--card:bars-->
+<div style="text-align:center;margin:28px 0"><img src="https://raw.githubusercontent.com/kcy19981201-create/autoblog/main/images/2026-11-24-quant-diary-14-var-calculation/bars.png" alt="퀀트 공부 일기 #14 - VaR 계산 방법 - EXAMPLE" style="width:100%;max-width:640px;border-radius:18px" /></div>
 
 <h2>결과 읽기</h2>
 <p><strong>[1] 선형 포지션.</strong> 가상 데이터의 표본 일간 변동성은 2.023% 로 가정한 1.890% 보다 조금 높게 나왔다. 이 σ 로 구한 분산-공분산 VaR 는 471만원이고, 같은 σ 의 정규분포로 10만 번 돌린 몬테카를로도 471만원으로 같다. 정규 가정 위의 두 방법이니 당연한 결과다. 역사적 시뮬레이션은 손실 큰 순서 1007, 664, 494, 483만원 중 세 번째인 494만원이다. 차이는 ES 에서 더 크게 벌어진다. 상위 7개(250 × 2.5% = 6.25, 올림) 평균인 역사적 ES 는 562만원인데, 정규분포 ES 는 473만원이다. 최악의 날 −10.07% 같은 꼬리를 정규분포는 못 담는다.</p>
@@ -124,7 +126,7 @@ for m in [-0.0259, -0.05]:
 <h2>리스크관리에서 보는 것들</h2>
 <p>VaR 를 계산했으면 맞는지 확인해야 한다. <strong>백테스팅</strong>은 지난 250일 동안 실제 손실이 그날의 99% VaR 를 넘은 횟수를 센다. 기대값은 2.5회이고, 바젤 기준은 넘은 횟수가 4회 이하면 녹색, 5~9회면 황색, 10회 이상이면 적색 구간으로 보고 자본 가산을 붙인다. 그리고 VaR 가 보지 못하는 영역은 <strong>스트레스 테스트</strong>로 메운다. "지수 −10%, 변동성 +20%p" 같은 시나리오를 직접 넣어 완전재평가하는 것이다. 오늘 [3] 의 마지막 두 줄이 가장 단순한 형태의 스트레스 테스트다.</p>
 <p>VaR 에는 수학적인 약점도 있다. 두 포지션을 합친 VaR 가 각각의 VaR 합보다 클 수 있다(준가법성 위반). 분산 투자를 했는데 위험 숫자가 커지는 이상한 일이 생길 수 있다는 뜻이다. ES 는 이 성질을 지켜서 규제가 ES 로 옮겨 갔다.</p>
-<!--card:summary-->
+<div style="text-align:center;margin:28px 0"><img src="https://raw.githubusercontent.com/kcy19981201-create/autoblog/main/images/2026-11-24-quant-diary-14-var-calculation/summary.png" alt="퀀트 공부 일기 #14 - VaR 계산 방법 - SUMMARY" style="width:100%;max-width:640px;border-radius:18px" /></div>
 
 <h2>자주 묻는 질문</h2>
 <h3>Q. 95% 와 99% 중 무엇을 쓰나?</h3>
